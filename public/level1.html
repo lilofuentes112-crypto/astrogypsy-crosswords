@@ -1,1 +1,463 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zertifikats-Kreuzworträtsel – Level 1</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #000;
+      color: #f5e0c0;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      min-height: 100vh;
+    }
+    .cw-wrapper {
+      position: relative;
+      width: 100%;
+      max-width: 600px;
+      padding: 16px;
+      box-sizing: border-box;
+    }
+    .cw-background {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      opacity: 0.25;
+      z-index: 0;
+    }
+    .cw-content {
+      position: relative;
+      z-index: 1;
+      background: rgba(0, 0, 0, 0.85);
+      border: 1px solid #8c5b2f;
+      border-radius: 8px;
+      padding: 12px;
+      backdrop-filter: blur(2px);
+    }
+    h1 {
+      font-size: 1.3rem;
+      margin: 0 0 8px 0;
+      text-align: center;
+      color: #f8e7c8;
+    }
+    .cw-grid {
+      margin: 12px auto;
+      display: grid;
+      gap: 1px;
+      background: #8c5b2f;
+      padding: 4px;
+      box-sizing: border-box;
+    }
+    .cw-cell {
+      position: relative;
+      background: #1b1b1b;
+      width: 100%;
+      padding-top: 100%; /* Quadrat */
+      box-sizing: border-box;
+    }
+    .cw-cell-inner {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .cw-cell input {
+      width: 90%;
+      height: 90%;
+      text-align: center;
+      font-size: 1rem;
+      border: none;
+      outline: none;
+      background: #111;
+      color: #f5e0c0;
+    }
+    .cw-cell.blocked {
+      background: #000;
+    }
+    .cw-number {
+      position: absolute;
+      top: 2px;
+      left: 3px;
+      font-size: 0.6rem;
+      color: #d1b08a;
+    }
+    .cw-clue-list {
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+    .cw-clue-list h2 {
+      font-size: 1rem;
+      margin: 8px 0 4px;
+    }
+    .cw-clue-item {
+      margin-bottom: 4px;
+    }
+    .cw-buttons {
+      margin-top: 10px;
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+    button {
+      background: #8c5b2f;
+      border: none;
+      padding: 6px 12px;
+      color: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    button:hover {
+      background: #a66b34;
+    }
+    .cw-message {
+      margin-top: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.1rem;
+      }
+      .cw-cell input {
+        font-size: 0.85rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="cw-wrapper">
+    <div class="cw-background" id="cw-background"></div>
 
+    <div class="cw-content">
+      <h1>Zertifikats-Kreuzworträtsel – Level 1</h1>
+      <div id="cw-grid" class="cw-grid"></div>
+
+      <div class="cw-buttons">
+        <button id="checkBtn">Lösung prüfen</button>
+        <button id="clearBtn">Alles löschen</button>
+      </div>
+      <div id="cw-message" class="cw-message"></div>
+
+      <div class="cw-clue-list" id="cw-clues"></div>
+    </div>
+  </div>
+
+  <script>
+    /********************************
+     * 1. KONFIGURATION FÜR LEVEL 1
+     ********************************/
+
+    // Hintergrundbild (optional)
+    const BACKGROUND_IMAGE_URL = ""; 
+    // z.B. "https://deine-domain.de/bilder/astromagie-level1.jpg"
+
+    // Rätselwörter + Fragen (nur Großbuchstaben verwenden)
+    const WORDS_CONFIG = [
+      { answer: "ASTROLOGIE", clue: "Lehre von den Zusammenhängen zwischen Gestirnen und irdischen Ereignissen." },
+      { answer: "CHIRON",     clue: "Planetoid, der oft mit Wunde und Heilung verbunden wird." },
+      { answer: "ASPEKT",     clue: "Winkelbeziehung zwischen zwei Planeten." },
+      { answer: "HIMMEL",     clue: "Worin stehen die Sternbilder in der Nacht?" }
+    ];
+
+    // Passwort für das nächste Level (frei wählbar)
+    const PASSWORD = "WALDFEE";
+
+    // Text bei Erfolg – {PASSWORT} wird ersetzt
+    const SUCCESS_TEXT_TEMPLATE =
+      "Gratuliere! Du hast Level 1 für das Zertifikat geschafft. "
+      + "Merke dir das Passwort {PASSWORT} – es ist dein Zugang zu Level 2.";
+
+    // Maximale Gittergröße (15x15 ist für die meisten Rätsel mehr als genug)
+    const MAX_ROWS = 15;
+    const MAX_COLS = 15;
+
+    /********************************
+     * 2. HINTERGRUND SETZEN
+     ********************************/
+    document.getElementById("cw-background").style.backgroundImage =
+      BACKGROUND_IMAGE_URL ? `url('${BACKGROUND_IMAGE_URL}')` : "none";
+
+    /********************************
+     * 3. HILFSFUNKTIONEN
+     ********************************/
+    function createEmptyGrid(rows, cols) {
+      const grid = [];
+      for (let r = 0; r < rows; r++) {
+        const row = [];
+        for (let c = 0; c < cols; c++) {
+          row.push(null);
+        }
+        grid.push(row);
+      }
+      return grid;
+    }
+
+    function placeWordOnGrid(grid, wordObj) {
+      const { row, col, direction, answer } = wordObj;
+      for (let i = 0; i < answer.length; i++) {
+        const r = direction === "across" ? row : row + i;
+        const c = direction === "across" ? col + i : col;
+        grid[r][c] = answer[i];
+      }
+    }
+
+    function canPlace(grid, wordObj) {
+      const { row, col, direction, answer } = wordObj;
+      for (let i = 0; i < answer.length; i++) {
+        const r = direction === "across" ? row : row + i;
+        const c = direction === "across" ? col + i : col;
+        if (r < 0 || r >= MAX_ROWS || c < 0 || c >= MAX_COLS) return false;
+        const existing = grid[r][c];
+        if (existing && existing !== answer[i]) return false;
+      }
+      return true;
+    }
+
+    function tryPlaceWithCrossings(grid, word, placedWords, number) {
+      const letters = word.answer.split("");
+      for (let placed of placedWords) {
+        const placedLetters = placed.answer.split("");
+        for (let i = 0; i < letters.length; i++) {
+          for (let j = 0; j < placedLetters.length; j++) {
+            if (letters[i] !== placedLetters[j]) continue;
+
+            if (placed.direction === "across") {
+              const row = placed.row - i;
+              const col = placed.col + j;
+              const candidate = { ...word, row, col, direction: "down", number };
+              if (canPlace(grid, candidate)) return candidate;
+            }
+
+            if (placed.direction === "down") {
+              const row = placed.row + j;
+              const col = placed.col - i;
+              const candidate = { ...word, row, col, direction: "across", number };
+              if (canPlace(grid, candidate)) return candidate;
+            }
+          }
+        }
+      }
+      return null;
+    }
+
+    function tryPlaceAnywhere(grid, word, number) {
+      const len = word.answer.length;
+      for (let r = 0; r < MAX_ROWS; r++) {
+        for (let c = 0; c <= MAX_COLS - len; c++) {
+          const candidate = { ...word, row: r, col: c, direction: "across", number };
+          if (canPlace(grid, candidate)) return candidate;
+        }
+      }
+      return null;
+    }
+
+    function autoPlaceWords(words) {
+      const grid = createEmptyGrid(MAX_ROWS, MAX_COLS);
+      const placedWords = [];
+
+      // erstes Wort in die Mitte, waagrecht
+      const first = {
+        ...words[0],
+        row: Math.floor(MAX_ROWS / 2),
+        col: Math.floor((MAX_COLS - words[0].answer.length) / 2),
+        direction: "across",
+        number: 1
+      };
+      if (first.col < 0 || first.col + first.answer.length > MAX_COLS) {
+        throw new Error("Erstes Wort ist zu lang für das Gitter.");
+      }
+      placeWordOnGrid(grid, first);
+      placedWords.push(first);
+
+      let numberCounter = 2;
+
+      for (let i = 1; i < words.length; i++) {
+        const w = words[i];
+        const placed = tryPlaceWithCrossings(grid, w, placedWords, numberCounter);
+        if (!placed) {
+          const fallback = tryPlaceAnywhere(grid, w, numberCounter);
+          if (!fallback) {
+            console.warn("Konnte Wort nicht platzieren:", w.answer);
+            continue;
+          } else {
+            placeWordOnGrid(grid, fallback);
+            placedWords.push(fallback);
+            numberCounter++;
+          }
+        } else {
+          placeWordOnGrid(grid, placed);
+          placedWords.push(placed);
+          numberCounter++;
+        }
+      }
+
+      return { grid, rows: MAX_ROWS, cols: MAX_COLS, placedWords };
+    }
+
+    /********************************
+     * 4. GITTER AUFBAUEN
+     ********************************/
+    let placedWordsData;
+    let solutionGrid;
+    let userInputs = [];
+
+    function buildCrossword() {
+      const { grid, rows, cols, placedWords } = autoPlaceWords(WORDS_CONFIG);
+      solutionGrid = grid;
+      placedWordsData = placedWords;
+
+      const gridEl = document.getElementById("cw-grid");
+      gridEl.innerHTML = "";
+      gridEl.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+      userInputs = [];
+      for (let r = 0; r < rows; r++) {
+        const rowArray = [];
+        for (let c = 0; c < cols; c++) {
+          const cellValue = grid[r][c];
+          const cell = document.createElement("div");
+          cell.className = "cw-cell";
+
+          if (!cellValue) {
+            cell.classList.add("blocked");
+            rowArray.push(null);
+          } else {
+            const inner = document.createElement("div");
+            inner.className = "cw-cell-inner";
+
+            const input = document.createElement("input");
+            input.maxLength = 1;
+            input.dataset.row = r;
+            input.dataset.col = c;
+            input.addEventListener("input", (e) => {
+              e.target.value = e.target.value.toUpperCase().slice(0, 1);
+            });
+
+            inner.appendChild(input);
+            cell.appendChild(inner);
+            rowArray.push(input);
+          }
+
+          gridEl.appendChild(cell);
+        }
+        userInputs.push(rowArray);
+      }
+
+      addNumbersAndClues();
+    }
+
+    function addNumbersAndClues() {
+      const gridEl = document.getElementById("cw-grid");
+      const cells = gridEl.querySelectorAll(".cw-cell");
+      const rows = solutionGrid.length;
+      const cols = solutionGrid[0].length;
+
+      function getCellElement(r, c) {
+        return cells[r * cols + c];
+      }
+
+      const cluesEl = document.getElementById("cw-clues");
+      cluesEl.innerHTML = "";
+
+      const across = [];
+      const down = [];
+
+      placedWordsData.forEach((w) => {
+        const { row, col, direction, number, clue } = w;
+        const cellEl = getCellElement(row, col);
+
+        const numSpan = document.createElement("div");
+        numSpan.className = "cw-number";
+        numSpan.textContent = number;
+        cellEl.appendChild(numSpan);
+
+        if (direction === "across") across.push(w);
+        else down.push(w);
+      });
+
+      if (across.length) {
+        const h = document.createElement("h2");
+        h.textContent = "Waagrecht";
+        cluesEl.appendChild(h);
+        across.forEach((w) => {
+          const div = document.createElement("div");
+          div.className = "cw-clue-item";
+          div.textContent = `${w.number}. ${w.clue}`;
+          cluesEl.appendChild(div);
+        });
+      }
+
+      if (down.length) {
+        const h = document.createElement("h2");
+        h.textContent = "Senkrecht";
+        cluesEl.appendChild(h);
+        down.forEach((w) => {
+          const div = document.createElement("div");
+          div.className = "cw-clue-item";
+          div.textContent = `${w.number}. ${w.clue}`;
+          cluesEl.appendChild(div);
+        });
+      }
+    }
+
+    /********************************
+     * 5. PRÜFEN & LÖSCHEN
+     ********************************/
+    function checkSolution() {
+      let allCorrect = true;
+
+      for (let r = 0; r < solutionGrid.length; r++) {
+        for (let c = 0; c < solutionGrid[0].length; c++) {
+          const sol = solutionGrid[r][c];
+          const input = userInputs[r][c];
+          if (!sol || !input) continue;
+
+          const val = (input.value || "").toUpperCase();
+          if (val !== sol) {
+            allCorrect = false;
+          }
+        }
+      }
+
+      const msgEl = document.getElementById("cw-message");
+
+      if (!allCorrect) {
+        msgEl.textContent = "Es sind noch Fehler oder leere Felder vorhanden.";
+        msgEl.style.color = "#f0a08f";
+        return;
+      }
+
+      const text = SUCCESS_TEXT_TEMPLATE.replace("{PASSWORT}", PASSWORD);
+      msgEl.textContent = text;
+      msgEl.style.color = "#8ff08f";
+    }
+
+    function clearAll() {
+      for (let r = 0; r < userInputs.length; r++) {
+        for (let c = 0; c < userInputs[0].length; c++) {
+          const input = userInputs[r][c];
+          if (input) input.value = "";
+        }
+      }
+      const msgEl = document.getElementById("cw-message");
+      msgEl.textContent = "";
+    }
+
+    document.getElementById("checkBtn").addEventListener("click", checkSolution);
+    document.getElementById("clearBtn").addEventListener("click", clearAll);
+
+    /********************************
+     * 6. START
+     ********************************/
+    buildCrossword();
+  </script>
+</body>
+</html>
