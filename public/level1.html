@@ -57,7 +57,7 @@
       position: relative;
       background: #000;
       width: 100%;
-      padding-top: 100%; /* Quadrat */
+      padding-top: 100%;
       box-sizing: border-box;
       border: 1px solid #8c5b2f;
     }
@@ -157,7 +157,7 @@
      * 1. KONFIGURATION FÜR LEVEL 1
      ********************************/
 
-    // Optionales Hintergrundbild (kann leer bleiben)
+    // Optionales Hintergrundbild (leer lassen oder URL einsetzen)
     const BACKGROUND_IMAGE_URL = "";
 
     // Rätselwörter + Fragen (nur Großbuchstaben verwenden)
@@ -348,7 +348,6 @@
       return cells;
     }
 
-    // Wird aufgerufen, wenn ein Feld fokussiert oder angetippt wird
     function setCurrentWordForCell(row, col, allowToggle) {
       const words = getWordsAtCell(row, col);
       if (!words.length) {
@@ -356,7 +355,18 @@
         return;
       }
 
-      // Wenn nur ein Wort durchgeht → dieses nehmen
+      // Wenn wir nur intern im aktuellen Wort weitergehen (allowToggle = false)
+      // und diese Zelle bereits Teil des aktuellen Wortes ist, Richtung nicht ändern.
+      if (
+        !allowToggle &&
+        currentWord &&
+        currentWord.cells.some((c) => c.row === row && c.col === col)
+      ) {
+        lastFocusRow = row;
+        lastFocusCol = col;
+        return;
+      }
+
       if (words.length === 1) {
         currentWord = {
           direction: words[0].direction,
@@ -365,18 +375,18 @@
         lastDirections = [words[0].direction];
         lastDirIndex = 0;
       } else {
-        // Kreuzung: beide Richtungen möglich
-        const directions = words.map(w => w.direction);
-        // Wenn gleiche Zelle wie zuvor und allowToggle → Richtung durchwechseln
+        const directions = words.map((w) => w.direction);
+
         if (
           allowToggle &&
           lastFocusRow === row &&
           lastFocusCol === col &&
           lastDirections.length
         ) {
+          // Richtung durchwechseln
           lastDirIndex = (lastDirIndex + 1) % lastDirections.length;
           const dir = lastDirections[lastDirIndex];
-          const w = words.find(w => w.direction === dir) || words[0];
+          const w = words.find((w) => w.direction === dir) || words[0];
           currentWord = {
             direction: w.direction,
             cells: buildCellsForWord(w)
@@ -384,7 +394,7 @@
         } else {
           // Standard: waagrecht bevorzugen
           const preferred =
-            words.find(w => w.direction === "across") || words[0];
+            words.find((w) => w.direction === "across") || words[0];
           currentWord = {
             direction: preferred.direction,
             cells: buildCellsForWord(preferred)
@@ -459,15 +469,21 @@
             input.dataset.row = r;
             input.dataset.col = c;
 
-            // Fokus: Richtung bestimmen (waagrecht/senkrecht), ggf. umschalten
+            // Fokus: innerhalb des aktuellen Wortes keine Richtungsänderung
             input.addEventListener("focus", () => {
               const row = parseInt(input.dataset.row, 10);
               const col = parseInt(input.dataset.col, 10);
-              // allowToggle = true, damit erneutes Antippen an Kreuzung die Richtung wechselt
+              setCurrentWordForCell(row, col, false);
+            });
+
+            // Klick/Tippen: Richtung explizit setzen/umschalten
+            input.addEventListener("click", () => {
+              const row = parseInt(input.dataset.row, 10);
+              const col = parseInt(input.dataset.col, 10);
               setCurrentWordForCell(row, col, true);
             });
 
-            // Eingabe: Grossbuchstaben + automatisch zum nächsten Feld im Wort
+            // Eingabe: Großbuchstaben und automatischer Sprung im Wort
             input.addEventListener("input", (e) => {
               const el = e.target;
               el.value = el.value.toUpperCase().slice(0, 1);
@@ -480,7 +496,7 @@
               }
             });
 
-            // Tastatur: Enter unterdrücken, Backspace springt zurück
+            // Tastatursteuerung
             input.addEventListener("keydown", (e) => {
               const row = parseInt(e.target.dataset.row, 10);
               const col = parseInt(e.target.dataset.col, 10);
@@ -492,7 +508,7 @@
 
               if (e.key === "Backspace") {
                 if (e.target.value) {
-                  // Nur löschen, nicht springen
+                  // nur löschen, nicht springen
                   return;
                 }
                 e.preventDefault();
@@ -536,10 +552,16 @@
         const { row, col, direction, number, clue } = w;
         const cellEl = getCellElement(row, col);
 
-        const numSpan = document.createElement("div");
-        numSpan.className = "cw-number";
-        numSpan.textContent = number;
-        cellEl.appendChild(numSpan);
+        // Nummern in derselben Zelle kombinieren (z.B. "1/3")
+        let numSpan = cellEl.querySelector(".cw-number");
+        if (numSpan) {
+          numSpan.textContent += "/" + number;
+        } else {
+          numSpan = document.createElement("div");
+          numSpan.className = "cw-number";
+          numSpan.textContent = number;
+          cellEl.appendChild(numSpan);
+        }
 
         if (direction === "across") across.push(w);
         else down.push(w);
