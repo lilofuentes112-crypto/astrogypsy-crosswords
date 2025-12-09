@@ -15,7 +15,7 @@
       padding: 0;
       font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
         sans-serif;
-      background: #000;
+      background: #000; /* bleibt im Iframe innen schwarz */
       color: #f5e0c0;
       display: flex;
       justify-content: center;
@@ -31,19 +31,9 @@
       padding: 0 8px;
     }
 
-    .cw-background {
-      position: fixed;
-      inset: 0;
-      background-size: cover;
-      background-position: center;
-      opacity: 0.65;
-      z-index: 0;
-    }
-
     .cw-content {
       position: relative;
-      z-index: 1;
-      background: rgba(0, 0, 0, 0.55);
+      background: rgba(0, 0, 0, 0.65);
       border: 1px solid #8c5b2f;
       border-radius: 8px;
       padding: 16px 16px 20px;
@@ -84,7 +74,9 @@
       border: 2px solid #8c5b2f;
       padding: 4px;
       display: inline-block;
-      background: transparent;
+      background-size: cover;      /* Hintergrundbild */
+      background-position: center; /* im Quadrat zentriert */
+      background-repeat: no-repeat;
     }
 
     .grid-row {
@@ -227,8 +219,6 @@
   </style>
 </head>
 <body>
-  <div class="cw-background" id="cw-bg"></div>
-
   <div class="cw-wrapper">
     <div class="cw-content">
       <h1>Zertifikats-Kreuzworträtsel – Level 1</h1>
@@ -264,15 +254,15 @@
   </div>
 
   <script>
-    // HINTERGRUNDBILD (Wix-URL)
+    // HINTERGRUNDBILD NUR IM RÄTSEL-QUADRAT
     const BACKGROUND_IMAGE_URL =
       "https://static.wixstatic.com/media/6d3632_8671621dade74457977217105254aadf~mv2.png";
 
-    // Raster-Größe (kannst du anpassen)
+    // Raster-Größe
     const GRID_ROWS = 15;
     const GRID_COLS = 15;
 
-    // Rätsel-Wörter – Positionen kannst du später nach Bedarf ändern
+    // Rätsel-Wörter
     const WORDS = [
       {
         id: "1-across",
@@ -334,9 +324,9 @@
     let activeDirection = "across";
     let cellMap = {}; // key: "r-c" -> { cell, input, letters: {wordId: {word, index}}, numberEl }
 
+    // Hintergrundbild NUR für das Quadrat
     if (BACKGROUND_IMAGE_URL) {
-      document.getElementById("cw-bg").style.backgroundImage =
-        `url("${BACKGROUND_IMAGE_URL}")`;
+      gridEl.style.backgroundImage = `url("${BACKGROUND_IMAGE_URL}")`;
     }
 
     directionButtons.forEach((btn) => {
@@ -426,7 +416,6 @@
               cellObj.cell.appendChild(numSpan);
               cellObj.numberEl = numSpan;
             } else {
-              // z.B. "1/3"
               cellObj.numberEl.textContent += "/" + word.clueNumber;
             }
           }
@@ -455,12 +444,10 @@
       const cellObj = getCellObj(row, col);
       if (!cellObj || !Object.keys(cellObj.letters).length) return;
 
-      // Falls Zelle zu einem Wort in der aktuellen Richtung gehört, dort bleiben
       const wordForCurrentDir = getWordEntryForDirection(
         cellObj,
         activeDirection
       );
-      // Falls nicht, Richtung wechseln, wenn möglich
       if (!wordForCurrentDir) {
         const altDir =
           activeDirection === "across" ? "down" : "across";
@@ -487,7 +474,7 @@
     function handleInput(e) {
       const input = e.target;
       let value = input.value.toUpperCase();
-      input.value = value.slice(-1); // nur letzter Buchstabe
+      input.value = value.slice(-1);
 
       const cell = input.parentElement;
       const r = parseInt(cell.dataset.row, 10);
@@ -495,7 +482,6 @@
       const cellObj = getCellObj(r, c);
       if (!cellObj) return;
 
-      // Fehlermarkierung beim Tippen entfernen
       cellObj.cell.classList.remove("wrong");
       feedbackEl.textContent = "";
       feedbackEl.className = "feedback";
@@ -530,7 +516,6 @@
       if (!cellObj) return;
 
       if (e.key === "Backspace" && !input.value) {
-        // zum vorherigen Buchstaben im aktuellen Wort springen
         const entry =
           getWordEntryForDirection(cellObj, activeDirection) ||
           Object.values(cellObj.letters)[0];
@@ -553,7 +538,6 @@
         }
       }
 
-      // Pfeiltasten: physische Bewegung
       let targetRow = r;
       let targetCol = c;
       let move = false;
@@ -599,7 +583,6 @@
       let allFilled = true;
       let allCorrect = true;
 
-      // alte Fehler-Markierungen entfernen
       for (const key in cellMap) {
         cellMap[key].cell.classList.remove("wrong");
       }
