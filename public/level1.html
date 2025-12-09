@@ -55,10 +55,11 @@
     }
     .cw-cell {
       position: relative;
-      background: #1b1b1b;
+      background: #000;
       width: 100%;
       padding-top: 100%; /* Quadrat */
       box-sizing: border-box;
+      border: 1px solid #8c5b2f;
     }
     .cw-cell-inner {
       position: absolute;
@@ -79,6 +80,7 @@
     }
     .cw-cell.blocked {
       background: #000;
+      border: 1px solid #222;
     }
     .cw-number {
       position: absolute;
@@ -155,9 +157,8 @@
      * 1. KONFIGURATION FÜR LEVEL 1
      ********************************/
 
-    // Hintergrundbild (optional)
-    const BACKGROUND_IMAGE_URL = ""; 
-    // z.B. "https://deine-domain.de/bilder/astromagie-level1.jpg"
+    // Optionales Hintergrundbild (kann leer bleiben)
+    const BACKGROUND_IMAGE_URL = "";
 
     // Rätselwörter + Fragen (nur Großbuchstaben verwenden)
     const WORDS_CONFIG = [
@@ -167,15 +168,15 @@
       { answer: "HIMMEL",     clue: "Worin stehen die Sternbilder in der Nacht?" }
     ];
 
-    // Passwort für das nächste Level (frei wählbar)
+    // Passwort für das nächste Level
     const PASSWORD = "WALDFEE";
 
-    // Text bei Erfolg – {PASSWORT} wird ersetzt
+    // Erfolgstext
     const SUCCESS_TEXT_TEMPLATE =
-      "Gratuliere! Du hast Level 1 für das Zertifikat geschafft. "
-      + "Merke dir das Passwort {PASSWORT} – es ist dein Zugang zu Level 2.";
+      "Gratuliere! Du hast Level 1 für das Zertifikat geschafft. " +
+      "Merke dir das Passwort {PASSWORT} – es ist dein Zugang zu Level 2.";
 
-    // Maximale Gittergröße (15x15 ist für die meisten Rätsel mehr als genug)
+    // Gittergröße
     const MAX_ROWS = 15;
     const MAX_COLS = 15;
 
@@ -263,7 +264,7 @@
       const grid = createEmptyGrid(MAX_ROWS, MAX_COLS);
       const placedWords = [];
 
-      // erstes Wort in die Mitte, waagrecht
+      // erstes Wort zentral waagrecht
       const first = {
         ...words[0],
         row: Math.floor(MAX_ROWS / 2),
@@ -303,12 +304,132 @@
     }
 
     /********************************
-     * 4. GITTER AUFBAUEN
+     * 4. NAVIGATIONSZUSTAND
      ********************************/
     let placedWordsData;
     let solutionGrid;
     let userInputs = [];
 
+    // aktuelles Wort für automatische Navigation
+    // currentWord = { direction: "across" | "down", cells: [{row, col}] }
+    let currentWord = null;
+    let lastFocusRow = null;
+    let lastFocusCol = null;
+    let lastDirections = [];
+    let lastDirIndex = 0;
+
+    function getWordsAtCell(row, col) {
+      const words = [];
+      if (!placedWordsData) return words;
+
+      for (const w of placedWordsData) {
+        if (w.direction === "across") {
+          if (row === w.row && col >= w.col && col < w.col + w.answer.length) {
+            words.push(w);
+          }
+        } else {
+          if (col === w.col && row >= w.row && row < w.row + w.answer.length) {
+            words.push(w);
+          }
+        }
+      }
+      return words;
+    }
+
+    function buildCellsForWord(w) {
+      const cells = [];
+      for (let i = 0; i < w.answer.length; i++) {
+        if (w.direction === "across") {
+          cells.push({ row: w.row, col: w.col + i });
+        } else {
+          cells.push({ row: w.row + i, col: w.col });
+        }
+      }
+      return cells;
+    }
+
+    // Wird aufgerufen, wenn ein Feld fokussiert oder angetippt wird
+    function setCurrentWordForCell(row, col, allowToggle) {
+      const words = getWordsAtCell(row, col);
+      if (!words.length) {
+        currentWord = null;
+        return;
+      }
+
+      // Wenn nur ein Wort durchgeht → dieses nehmen
+      if (words.length === 1) {
+        currentWord = {
+          direction: words[0].direction,
+          cells: buildCellsForWord(words[0])
+        };
+        lastDirections = [words[0].direction];
+        lastDirIndex = 0;
+      } else {
+        // Kreuzung: beide Richtungen möglich
+        const directions = words.map(w => w.direction);
+        // Wenn gleiche Zelle wie zuvor und allowToggle → Richtung durchwechseln
+        if (
+          allowToggle &&
+          lastFocusRow === row &&
+          lastFocusCol === col &&
+          lastDirections.length
+        ) {
+          lastDirIndex = (lastDirIndex + 1) % lastDirections.length;
+          const dir = lastDirections[lastDirIndex];
+          const w = words.find(w => w.direction === dir) || words[0];
+          currentWord = {
+            direction: w.direction,
+            cells: buildCellsForWord(w)
+          };
+        } else {
+          // Standard: waagrecht bevorzugen
+          const preferred =
+            words.find(w => w.direction === "across") || words[0];
+          currentWord = {
+            direction: preferred.direction,
+            cells: buildCellsForWord(preferred)
+          };
+          lastDirections = directions;
+          lastDirIndex = directions.indexOf(preferred.direction);
+        }
+      }
+
+      lastFocusRow = row;
+      lastFocusCol = col;
+    }
+
+    function moveFocusToNext(row, col) {
+      if (!currentWord) return;
+      const idx = currentWord.cells.findIndex(
+        (c) => c.row === row && c.col === col
+      );
+      if (idx === -1) return;
+      const next = currentWord.cells[idx + 1];
+      if (!next) return;
+      const input = userInputs[next.row][next.col];
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }
+
+    function moveFocusToPrev(row, col) {
+      if (!currentWord) return;
+      const idx = currentWord.cells.findIndex(
+        (c) => c.row === row && c.col === col
+      );
+      if (idx <= 0) return;
+      const prev = currentWord.cells[idx - 1];
+      const input = userInputs[prev.row][prev.col];
+      if (input) {
+        input.focus();
+        input.select();
+      }
+    }
+
+    /********************************
+     * 5. GITTER AUFBAUEN
+     ********************************/
     function buildCrossword() {
       const { grid, rows, cols, placedWords } = autoPlaceWords(WORDS_CONFIG);
       solutionGrid = grid;
@@ -337,8 +458,46 @@
             input.maxLength = 1;
             input.dataset.row = r;
             input.dataset.col = c;
+
+            // Fokus: Richtung bestimmen (waagrecht/senkrecht), ggf. umschalten
+            input.addEventListener("focus", () => {
+              const row = parseInt(input.dataset.row, 10);
+              const col = parseInt(input.dataset.col, 10);
+              // allowToggle = true, damit erneutes Antippen an Kreuzung die Richtung wechselt
+              setCurrentWordForCell(row, col, true);
+            });
+
+            // Eingabe: Grossbuchstaben + automatisch zum nächsten Feld im Wort
             input.addEventListener("input", (e) => {
-              e.target.value = e.target.value.toUpperCase().slice(0, 1);
+              const el = e.target;
+              el.value = el.value.toUpperCase().slice(0, 1);
+
+              const row = parseInt(el.dataset.row, 10);
+              const col = parseInt(el.dataset.col, 10);
+
+              if (el.value) {
+                moveFocusToNext(row, col);
+              }
+            });
+
+            // Tastatur: Enter unterdrücken, Backspace springt zurück
+            input.addEventListener("keydown", (e) => {
+              const row = parseInt(e.target.dataset.row, 10);
+              const col = parseInt(e.target.dataset.col, 10);
+
+              if (e.key === "Enter") {
+                e.preventDefault();
+                return;
+              }
+
+              if (e.key === "Backspace") {
+                if (e.target.value) {
+                  // Nur löschen, nicht springen
+                  return;
+                }
+                e.preventDefault();
+                moveFocusToPrev(row, col);
+              }
             });
 
             inner.appendChild(input);
@@ -354,6 +513,9 @@
       addNumbersAndClues();
     }
 
+    /********************************
+     * 6. NUMMERIERUNG UND FRAGEN
+     ********************************/
     function addNumbersAndClues() {
       const gridEl = document.getElementById("cw-grid");
       const cells = gridEl.querySelectorAll(".cw-cell");
@@ -409,7 +571,7 @@
     }
 
     /********************************
-     * 5. PRÜFEN & LÖSCHEN
+     * 7. PRÜFEN & LÖSCHEN
      ********************************/
     function checkSolution() {
       let allCorrect = true;
@@ -455,7 +617,7 @@
     document.getElementById("clearBtn").addEventListener("click", clearAll);
 
     /********************************
-     * 6. START
+     * 8. START
      ********************************/
     buildCrossword();
   </script>
