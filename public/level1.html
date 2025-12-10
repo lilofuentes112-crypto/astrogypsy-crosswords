@@ -3,109 +3,109 @@
 <head>
   <meta charset="UTF-8" />
   <title>Zertifikats-Kreuzworträtsel – Level 1</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root {
-      --cell-size: 32px;
-    }
-
-    @media (max-width: 600px) {
-      :root {
-        --cell-size: 26px;
-      }
-    }
-
     * {
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      min-height: 100vh;
+      padding: 0;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #000;
+      color: #f5be80;
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      background: #000;
-      color: #f5c08a;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      min-height: 100vh;
     }
 
     .cw-wrapper {
-      margin: 24px 8px;
-      padding: 24px 24px 32px;
-      border: 2px solid #c07a3a;
-      border-radius: 6px;
-      background: radial-gradient(circle at top, #1b130c 0%, #050505 60%, #000 100%);
+      margin: 24px;
+      border: 2px solid #c47b3a;
+      padding: 16px 16px 24px;
       max-width: 640px;
       width: 100%;
+      background: #000;
     }
 
     .cw-title {
       text-align: center;
-      font-weight: 600;
-      margin-bottom: 12px;
       font-size: 20px;
+      margin-bottom: 12px;
     }
 
-    .cw-dir-toggle {
+    .cw-mode-toggle {
       display: flex;
       justify-content: center;
-      gap: 4px;
-      margin-bottom: 12px;
+      gap: 8px;
+      margin-bottom: 8px;
     }
 
-    .cw-dir-toggle button {
-      border: 1px solid #c07a3a;
-      background: #3a210f;
-      color: #f5c08a;
-      padding: 4px 12px;
-      font-size: 13px;
-      cursor: pointer;
-      border-radius: 4px;
-    }
-
-    .cw-dir-toggle button.cw-active {
-      background: #c07a3a;
-      color: #120804;
-    }
-
-    .cw-board {
-      margin: 0 auto 16px;
-      padding: 8px;
-      border: 1px solid #c07a3a;
-      border-radius: 4px;
+    .cw-mode-button {
+      border: 1px solid #c47b3a;
       background: #000;
+      color: #f5be80;
+      padding: 4px 12px;
+      cursor: default;
+      font-size: 12px;
+      border-radius: 3px;
+    }
+
+    .cw-mode-button.active {
+      background: #c47b3a;
+      color: #000;
+    }
+
+    .cw-main {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .cw-grid-frame {
+      position: relative;
+      width: min(420px, 100%);
+      aspect-ratio: 1 / 1;
+      border: 2px solid #c47b3a;
+      margin-bottom: 10px;
+      overflow: hidden;
     }
 
     .cw-background {
-      position: relative;
-      background-position: center;
+      position: absolute;
+      inset: 0;
+      background-image: url("https://static.wixstatic.com/media/6d3632_8671621dade74457977217105254aadf~mv2.png");
       background-size: cover;
-      background-repeat: no-repeat;
-      padding: 12px;
+      background-position: center;
+      opacity: 0.9;
+      z-index: 1;
     }
 
     .cw-grid {
-      display: inline-grid;
-      grid-template-columns: repeat(auto-fit, var(--cell-size));
-      gap: 0;
-      background: rgba(0, 0, 0, 0.3);
-      border-radius: 2px;
+      position: absolute;
+      inset: 0;
+      display: grid;
+      grid-template-columns: repeat(15, 1fr);
+      grid-template-rows: repeat(15, 1fr);
+      padding: 18px;
+      z-index: 2;
     }
 
     .cw-cell {
       position: relative;
-      width: var(--cell-size);
-      height: var(--cell-size);
-      border: none; /* leere Felder ohne Raster */
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
-    .cw-cell.used {
-      border: 1px solid #c07a3a; /* nur benutzte Felder zeigen das Raster */
-      background: rgba(0, 0, 0, 0.65);
+    .cw-cell.has-letter::before {
+      content: "";
+      position: absolute;
+      inset: 1px;
+      border: 1px solid #c47b3a;
+      background: rgba(0, 0, 0, 0.45);
     }
 
     .cw-number {
@@ -113,81 +113,102 @@
       top: 2px;
       left: 3px;
       font-size: 9px;
-      color: #f5c08a;
+      color: #f5be80;
+      z-index: 3;
       pointer-events: none;
     }
 
     .cw-input {
-      width: 80%;
-      height: 80%;
-      text-align: center;
-      font-size: 16px;
+      position: relative;
+      width: 100%;
+      height: 100%;
       border: none;
-      outline: none;
       background: transparent;
-      color: #f5c08a;
+      text-align: center;
       text-transform: uppercase;
+      font-size: 14px;
+      color: #fff;
+      z-index: 4;
     }
 
-    .cw-input.cw-correct {
-      color: #a7ff9e;
+    .cw-input:focus {
+      outline: 1px solid #ffd08a;
+      outline-offset: -1px;
     }
 
-    .cw-input.cw-wrong {
-      color: #ff7d7d;
-    }
-
-    .cw-controls {
+    .cw-buttons {
       display: flex;
       justify-content: center;
       gap: 8px;
-      margin-bottom: 10px;
+      margin-bottom: 8px;
     }
 
-    .cw-controls button {
-      border: 1px solid #c07a3a;
-      background: #3a210f;
-      color: #f5c08a;
-      padding: 4px 14px;
-      font-size: 13px;
+    .cw-button {
+      border: 1px solid #c47b3a;
+      background: #000;
+      color: #f5be80;
+      padding: 4px 12px;
+      font-size: 12px;
       cursor: pointer;
-      border-radius: 4px;
+      border-radius: 3px;
+    }
+
+    .cw-button:hover {
+      background: #c47b3a;
+      color: #000;
     }
 
     .cw-message {
       text-align: center;
-      font-size: 13px;
-      margin-bottom: 12px;
-      min-height: 1.2em;
+      font-size: 12px;
+      margin-bottom: 8px;
+      min-height: 18px;
     }
 
     .cw-message.ok {
-      color: #a7ff9e;
+      color: #8fd18f;
     }
 
     .cw-message.err {
-      color: #ff9d8a;
+      color: #ffb3b3;
     }
 
-    .cw-clues {
-      font-size: 13px;
-      line-height: 1.4;
+    .cw-clues-block {
+      margin-top: 8px;
+      font-size: 12px;
     }
 
-    .cw-clues h3 {
-      font-size: 14px;
-      margin: 10px 0 4px;
-      text-transform: none;
-      color: #f5c08a;
+    .cw-clues-block h3 {
+      margin: 6px 0 4px;
+      font-size: 12px;
     }
 
-    .cw-clues ol {
-      margin: 0 0 6px 20px;
+    .cw-clues-block ol {
+      margin: 0 0 4px 18px;
       padding: 0;
     }
 
-    .cw-clues li {
+    .cw-clues-block li {
       margin-bottom: 2px;
+    }
+
+    @media (max-width: 480px) {
+      .cw-wrapper {
+        margin: 8px;
+        padding: 12px 10px 16px;
+      }
+
+      .cw-grid-frame {
+        width: 100%;
+      }
+
+      .cw-title {
+        font-size: 16px;
+      }
+
+      .cw-input {
+        font-size: 12px;
+      }
     }
   </style>
 </head>
@@ -195,47 +216,42 @@
   <div class="cw-wrapper">
     <div class="cw-title">Zertifikats-Kreuzworträtsel – Level 1</div>
 
-    <div class="cw-dir-toggle">
-      <button id="btn-across" class="cw-active" data-dir="across">Waagrecht</button>
-      <button id="btn-down" data-dir="down">Senkrecht</button>
+    <div class="cw-mode-toggle">
+      <button type="button" class="cw-mode-button active" data-mode="across">
+        Waagrecht
+      </button>
+      <button type="button" class="cw-mode-button" data-mode="down">
+        Senkrecht
+      </button>
     </div>
 
-    <div class="cw-board">
-      <div id="cw-background" class="cw-background">
-        <div id="cw-grid" class="cw-grid"></div>
+    <div class="cw-main">
+      <div class="cw-grid-frame">
+        <div class="cw-background"></div>
+        <div class="cw-grid" id="cw-grid"></div>
       </div>
-    </div>
 
-    <div class="cw-controls">
-      <button id="btn-check">Lösung prüfen</button>
-      <button id="btn-clear">Alles löschen</button>
-    </div>
+      <div class="cw-buttons">
+        <button type="button" class="cw-button" id="check-btn">Lösung prüfen</button>
+        <button type="button" class="cw-button" id="clear-btn">Alles löschen</button>
+      </div>
 
-    <div id="cw-message" class="cw-message"></div>
+      <div class="cw-message" id="cw-message"></div>
 
-    <div class="cw-clues">
-      <h3>Waagrecht</h3>
-      <ol id="cw-clues-across"></ol>
+      <div class="cw-clues-block">
+        <h3>Waagrecht</h3>
+        <ol id="across-clues"></ol>
 
-      <h3>Senkrecht</h3>
-      <ol id="cw-clues-down"></ol>
+        <h3>Senkrecht</h3>
+        <ol id="down-clues"></ol>
+      </div>
     </div>
   </div>
 
   <script>
-    /************************************************************
-     * KONFIGURATION – pro Rätsel nur diese Werte anpassen
-     ************************************************************/
-
-    const BACKGROUND_URL =
-      "https://static.wixstatic.com/media/6d3632_8671621dade74457977217105254aadf~mv2.png";
-
-    const FINAL_PASSWORD = "STIERKRAFT";
-
-    const GRID_ROWS = 25;
-    const GRID_COLS = 25;
-
-    // WICHTIG: clues OHNE führende Nummern schreiben
+    // -------------------------------------------------------------
+    // 1. Wort-Eingabe (deine Daten)
+    // -------------------------------------------------------------
     const WORDS_INPUT = [
       {
         answer: "ASTROLOGIE",
@@ -259,515 +275,337 @@
       },
     ];
 
-    /************************************************************
-     * AB HIER NICHTS MEHR ÄNDERN
-     ************************************************************/
+    const GRID_SIZE = 15;
 
-    const grid = [];
-    for (let r = 0; r < GRID_ROWS; r++) {
-      const row = [];
-      for (let c = 0; c < GRID_COLS; c++) {
-        row.push(null);
-      }
-      grid.push(row);
+    // interne Strukturen
+    const grid = Array.from({ length: GRID_SIZE }, () =>
+      Array.from({ length: GRID_SIZE }, () => null)
+    );
+
+    const placedWords = []; // {answer, clue, direction, row, col, cells:[{r,c}]}
+    const cellInputs = {}; // "r,c" -> input element
+    const cellNumbers = {}; // "r,c" -> [nr1, nr2...]
+
+    let activeWord = null;
+    let activeIndex = 0;
+
+    // -------------------------------------------------------------
+    // 2. Hilfsfunktionen
+    // -------------------------------------------------------------
+    function key(r, c) {
+      return r + "," + c;
     }
 
-    const wordsPlaced = []; // {id, answer, clue, dir, row, col}
-    const cellMap = new Map(); // "r,c" -> { row, col, solution, acrossId, downId, number }
-    let minRow = GRID_ROWS, maxRow = -1, minCol = GRID_COLS, maxCol = -1;
-
-    function placeAllWords() {
-      const sorted = [...WORDS_INPUT].map((w, i) => ({
-        ...w,
-        id: i,
-        answer: w.answer.replace(/\s+/g, "").toUpperCase(),
-      }));
-
-      sorted.sort((a, b) => b.answer.length - a.answer.length);
-
-      for (const word of sorted) {
-        if (wordsPlaced.length === 0) {
-          placeFirstWord(word);
-        } else {
-          const ok = placeNextWord(word);
-          if (!ok) {
-            // Wenn ein Wort sich überhaupt nicht kreuzen lässt,
-            // wird es weggelassen (kein einsames Wort im Raster).
-            console.warn("Konnte Wort nicht platzieren (wird ausgelassen):", word.answer);
-          }
-        }
-      }
-
-      for (let r = 0; r < GRID_ROWS; r++) {
-        for (let c = 0; c < GRID_COLS; c++) {
-          if (grid[r][c]) {
-            if (r < minRow) minRow = r;
-            if (r > maxRow) maxRow = r;
-            if (c < minCol) minCol = c;
-            if (c > maxCol) maxCol = c;
-          }
-        }
-      }
-
-      numberWords();
-    }
-
-    function placeFirstWord(word) {
-      const row = Math.floor(GRID_ROWS / 2);
-      const col = Math.floor((GRID_COLS - word.answer.length) / 2);
-      writeWordToGrid(word, row, col);
-    }
-
-    function placeNextWord(word) {
-      const letters = word.answer.split("");
-      const candidates = [];
-
-      for (let wp of wordsPlaced) {
-        for (let i = 0; i < wp.answer.length; i++) {
-          const ch = wp.answer[i];
-          for (let j = 0; j < letters.length; j++) {
-            if (letters[j] !== ch) continue;
-
-            if (word.direction === "across") {
-              if (wp.dir === "across") continue;
-              const row = wp.row + i;
-              const col = wp.col - j;
-              candidates.push({ word, row, col });
-            } else {
-              if (wp.dir === "down") continue;
-              const row = wp.row - j;
-              const col = wp.col + i;
-              candidates.push({ word, row, col });
-            }
-          }
-        }
-      }
-
-      for (const cand of candidates) {
-        if (canPlaceWord(cand.word, cand.row, cand.col)) {
-          writeWordToGrid(cand.word, cand.row, cand.col);
-          return true;
-        }
-      }
-      return false;
-    }
-
-    function canPlaceWord(word, row, col) {
-      const len = word.answer.length;
-      let intersects = false;
-
-      if (word.direction === "across") {
-        if (col < 0 || col + len > GRID_COLS) return false;
-        if (row < 0 || row >= GRID_ROWS) return false;
-
-        for (let i = 0; i < len; i++) {
-          const r = row;
-          const c = col + i;
-          const cell = grid[r][c];
-
-          if (cell && cell.letter !== word.answer[i]) return false;
-          if (cell && cell.letter === word.answer[i]) intersects = true;
-
-          const up = r - 1 >= 0 ? grid[r - 1][c] : null;
-          const down = r + 1 < GRID_ROWS ? grid[r + 1][c] : null;
-          if ((up && !cell) || (down && !cell)) return false;
-        }
-
-        if (col - 1 >= 0 && grid[row][col - 1]) return false;
-        if (col + len < GRID_COLS && grid[row][col + len]) return false;
+    function canPlaceWord(answer, direction, row, col) {
+      const len = answer.length;
+      if (direction === "across") {
+        if (col + len > GRID_SIZE) return false;
       } else {
-        if (row < 0 || row + len > GRID_ROWS) return false;
-        if (col < 0 || col >= GRID_COLS) return false;
-
-        for (let i = 0; i < len; i++) {
-          const r = row + i;
-          const c = col;
-          const cell = grid[r][c];
-
-          if (cell && cell.letter !== word.answer[i]) return false;
-          if (cell && cell.letter === word.answer[i]) intersects = true;
-
-          const left = c - 1 >= 0 ? grid[r][c - 1] : null;
-          const right = c + 1 < GRID_COLS ? grid[r][c + 1] : null;
-          if ((left && !cell) || (right && !cell)) return false;
-        }
-
-        if (row - 1 >= 0 && grid[row - 1][col]) return false;
-        if (row + len < GRID_ROWS && grid[row + len][col]) return false;
+        if (row + len > GRID_SIZE) return false;
       }
 
-      // mindestens ein gemeinsamer Buchstabe mit einem bereits gesetzten Wort
-      if (wordsPlaced.length > 0 && !intersects) return false;
+      let hasOverlap = false;
+
+      for (let i = 0; i < len; i++) {
+        const r = direction === "across" ? row : row + i;
+        const c = direction === "across" ? col + i : col;
+        const existing = grid[r][c];
+        if (existing) {
+          if (existing.letter !== answer[i]) return false;
+          hasOverlap = true;
+        }
+      }
+
+      // zwingend: mindestens ein gemeinsamer Buchstabe
+      if (!hasOverlap && placedWords.length > 0) return false;
 
       return true;
     }
 
-    function writeWordToGrid(word, row, col) {
-      wordsPlaced.push({
-        id: word.id,
-        answer: word.answer,
-        clue: word.clue,
-        dir: word.direction,
-        row,
-        col,
-      });
+    function placeWord(word) {
+      const answer = word.answer;
+      const dir = word.direction;
+      const len = answer.length;
 
-      const letters = word.answer.split("");
+      // Versuche zuerst, einen gemeinsamen Buchstaben zu finden
+      let bestPlacement = null;
 
-      if (word.direction === "across") {
-        for (let i = 0; i < letters.length; i++) {
-          const r = row;
-          const c = col + i;
-          placeLetter(r, c, letters[i], word, "across");
+      if (placedWords.length === 0) {
+        // erstes Wort: mittig waagrecht
+        const row = Math.floor(GRID_SIZE / 2);
+        const col = Math.max(0, Math.floor((GRID_SIZE - len) / 2));
+        if (canPlaceWord(answer, dir, row, col)) {
+          bestPlacement = { row, col };
         }
       } else {
-        for (let i = 0; i < letters.length; i++) {
-          const r = row + i;
-          const c = col;
-          placeLetter(r, c, letters[i], word, "down");
-        }
-      }
-    }
+        outer: for (const placed of placedWords) {
+          for (let i = 0; i < placed.answer.length; i++) {
+            for (let j = 0; j < len; j++) {
+              if (placed.answer[i] !== answer[j]) continue;
 
-    function placeLetter(r, c, letter, word, dir) {
-      let cell = grid[r][c];
-      if (!cell) {
-        cell = {
-          letter,
-          acrossId: null,
-          downId: null,
-        };
-        grid[r][c] = cell;
-      }
-      if (dir === "across") {
-        cell.acrossId = word.id;
-      } else {
-        cell.downId = word.id;
-      }
-    }
+              const baseRow = placed.direction === "across"
+                ? placed.row
+                : placed.row + i;
+              const baseCol = placed.direction === "across"
+                ? placed.col + i
+                : placed.col;
 
-    function numberWords() {
-      let counter = 1;
-      const startMap = new Map(); // id -> number
+              let row, col;
+              if (dir === "across") {
+                row = baseRow;
+                col = baseCol - j;
+              } else {
+                row = baseRow - j;
+                col = baseCol;
+              }
 
-      for (const wp of wordsPlaced) {
-        const { dir, row, col, id } = wp;
-        const r = row;
-        const c = col;
-        const key = r + "," + c;
-
-        let cell = cellMap.get(key);
-        if (!cell) {
-          cell = {
-            row: r,
-            col: c,
-            solution: grid[r][c].letter,
-            acrossId: grid[r][c].acrossId ?? null,
-            downId: grid[r][c].downId ?? null,
-            number: null,
-          };
-          cellMap.set(key, cell);
-        }
-
-        if (!cell.number) {
-          cell.number = counter;
-          startMap.set(id, counter);
-          counter++;
-        }
-      }
-
-      for (let r = 0; r < GRID_ROWS; r++) {
-        for (let c = 0; c < GRID_COLS; c++) {
-          const gcell = grid[r][c];
-          if (!gcell) continue;
-          const key = r + "," + c;
-          if (!cellMap.has(key)) {
-            cellMap.set(key, {
-              row: r,
-              col: c,
-              solution: gcell.letter,
-              acrossId: gcell.acrossId ?? null,
-              downId: gcell.downId ?? null,
-              number: null,
-            });
+              if (
+                row >= 0 &&
+                col >= 0 &&
+                row < GRID_SIZE &&
+                col < GRID_SIZE &&
+                canPlaceWord(answer, dir, row, col)
+              ) {
+                bestPlacement = { row, col };
+                break outer;
+              }
+            }
           }
         }
       }
 
-      const acrossList = document.getElementById("cw-clues-across");
-      const downList = document.getElementById("cw-clues-down");
-      acrossList.innerHTML = "";
-      downList.innerHTML = "";
-
-      const placedById = new Map();
-      for (const w of wordsPlaced) placedById.set(w.id, w);
-
-      const wordsInOriginalOrder = WORDS_INPUT
-        .map((w, i) => placedById.get(i))
-        .filter(Boolean);
-
-      for (const wp of wordsInOriginalOrder) {
-        const num = startMap.get(wp.id);
-        if (!num) continue;
-        const li = document.createElement("li");
-        li.textContent = `${num}. ${wp.clue}`;
-        if (wp.dir === "across") {
-          acrossList.appendChild(li);
+      if (!bestPlacement) {
+        // wenn gar nichts geht und es das erste Wort ist, notfalls irgendwo hin
+        if (placedWords.length === 0) {
+          const row = Math.floor(GRID_SIZE / 2);
+          const col = Math.max(0, Math.floor((GRID_SIZE - len) / 2));
+          if (canPlaceWord(answer, dir, row, col)) {
+            bestPlacement = { row, col };
+          } else {
+            return false;
+          }
         } else {
-          downList.appendChild(li);
+          // bei späteren Wörtern lieber gar nicht platzieren, statt "in der Luft"
+          return false;
         }
+      }
+
+      const cells = [];
+      for (let i = 0; i < len; i++) {
+        const r = dir === "across" ? bestPlacement.row : bestPlacement.row + i;
+        const c = dir === "across" ? bestPlacement.col + i : bestPlacement.col;
+        grid[r][c] = { letter: answer[i], wordIndex: placedWords.length };
+        cells.push({ r, c });
+      }
+
+      placedWords.push({
+        answer,
+        clue: word.clue,
+        direction: dir,
+        row: bestPlacement.row,
+        col: bestPlacement.col,
+        cells,
+        clueNumber: 0, // kommt später
+      });
+
+      return true;
+    }
+
+    function buildAllWords() {
+      WORDS_INPUT.forEach((w) => placeWord(w));
+
+      // Nummern für Clues (getrennt nach Richtung)
+      let ac = 1;
+      let dn = 1;
+      for (const w of placedWords) {
+        if (w.direction === "across") {
+          w.clueNumber = ac++;
+        } else {
+          w.clueNumber = dn++;
+        }
+      }
+
+      // Nummern pro Zelle sammeln (für 1/3 etc.)
+      for (const w of placedWords) {
+        const firstCell = w.cells[0];
+        const k = key(firstCell.r, firstCell.c);
+        if (!cellNumbers[k]) cellNumbers[k] = [];
+        cellNumbers[k].push(w.clueNumber);
       }
     }
 
+    // -------------------------------------------------------------
+    // 3. Rendering
+    // -------------------------------------------------------------
     function renderGrid() {
-      const bg = document.getElementById("cw-background");
-      if (BACKGROUND_URL) {
-        bg.style.backgroundImage = `url("${BACKGROUND_URL}")`;
-      }
+      const gridEl = document.getElementById("cw-grid");
+      gridEl.innerHTML = "";
 
-      const container = document.getElementById("cw-grid");
-      container.innerHTML = "";
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          const cell = document.createElement("div");
+          cell.className = "cw-cell";
 
-      if (minRow > maxRow || minCol > maxCol) {
-        return;
-      }
+          const val = grid[r][c];
+          if (val) {
+            cell.classList.add("has-letter");
 
-      const visibleCols = maxCol - minCol + 1;
-      container.style.gridTemplateColumns =
-        "repeat(" + visibleCols + ", var(--cell-size))";
-
-      for (let r = minRow; r <= maxRow; r++) {
-        for (let c = minCol; c <= maxCol; c++) {
-          const gcell = grid[r][c];
-          const div = document.createElement("div");
-          div.className = "cw-cell";
-          div.dataset.row = r;
-          div.dataset.col = c;
-
-          if (gcell) {
-            div.classList.add("used");
-            const key = r + "," + c;
-            const cmap = cellMap.get(key);
-
-            if (cmap && cmap.number) {
-              const numSpan = document.createElement("span");
-              numSpan.className = "cw-number";
-              numSpan.textContent = cmap.number;
-              div.appendChild(numSpan);
+            const numKey = key(r, c);
+            if (cellNumbers[numKey]) {
+              const numEl = document.createElement("div");
+              numEl.className = "cw-number";
+              numEl.textContent = cellNumbers[numKey].join("/");
+              cell.appendChild(numEl);
             }
 
             const input = document.createElement("input");
-            input.type = "text";
             input.maxLength = 1;
             input.className = "cw-input";
-            input.autocomplete = "off";
             input.dataset.row = r;
             input.dataset.col = c;
-            input.dataset.solution = gcell.letter;
-            input.dataset.acrossId = gcell.acrossId ?? "";
-            input.dataset.downId = gcell.downId ?? "";
-            div.appendChild(input);
+            cell.appendChild(input);
+            cellInputs[numKey] = input;
+
+            input.addEventListener("input", onCellInput);
+            input.addEventListener("focus", onCellFocus);
           }
 
-          container.appendChild(div);
+          gridEl.appendChild(cell);
         }
       }
     }
 
-    /************************************************************
-     * INTERAKTION
-     ************************************************************/
+    function renderClues() {
+      const acrossOl = document.getElementById("across-clues");
+      const downOl = document.getElementById("down-clues");
+      acrossOl.innerHTML = "";
+      downOl.innerHTML = "";
 
-    let currentDirection = "across";
+      const acrossWords = placedWords.filter((w) => w.direction === "across");
+      const downWords = placedWords.filter((w) => w.direction === "down");
 
-    function setDirection(dir) {
-      currentDirection = dir;
-      document
-        .getElementById("btn-across")
-        .classList.toggle("cw-active", dir === "across");
-      document
-        .getElementById("btn-down")
-        .classList.toggle("cw-active", dir === "down");
-    }
-
-    function getCellInput(row, col) {
-      return document.querySelector(
-        `.cw-input[data-row="${row}"][data-col="${col}"]`
-      );
-    }
-
-    function moveFocus(row, col, dir, step) {
-      let r = Number(row);
-      let c = Number(col);
-      while (true) {
-        if (dir === "across") {
-          c += step;
-        } else {
-          r += step;
-        }
-        const next = getCellInput(r, c);
-        if (!next) return;
-        next.focus();
-        next.select();
-        return;
-      }
-    }
-
-    function handleInputKey(e) {
-      const input = e.target;
-      if (!input.classList.contains("cw-input")) return;
-
-      const row = Number(input.dataset.row);
-      const col = Number(input.dataset.col);
-
-      const key = e.key;
-
-      if (key.length === 1 && /^[a-zA-ZäöüÄÖÜß]$/.test(key)) {
-        e.preventDefault();
-        input.value = key.toUpperCase();
-        input.classList.remove("cw-wrong", "cw-correct");
-        moveFocus(row, col, currentDirection, +1);
-        return;
-      }
-
-      if (key === "Backspace") {
-        e.preventDefault();
-        if (input.value) {
-          input.value = "";
-        } else {
-          moveFocus(row, col, currentDirection, -1);
-        }
-        input.classList.remove("cw-wrong", "cw-correct");
-        return;
-      }
-
-      if (key === "Enter" || key === "Tab") {
-        e.preventDefault();
-        moveFocus(row, col, currentDirection, +1);
-        return;
-      }
-
-      if (key === "ArrowRight") {
-        e.preventDefault();
-        moveFocus(row, col, "across", +1);
-        return;
-      }
-      if (key === "ArrowLeft") {
-        e.preventDefault();
-        moveFocus(row, col, "across", -1);
-        return;
-      }
-      if (key === "ArrowDown") {
-        e.preventDefault();
-        moveFocus(row, col, "down", +1);
-        return;
-      }
-      if (key === "ArrowUp") {
-        e.preventDefault();
-        moveFocus(row, col, "down", -1);
-        return;
-      }
-    }
-
-    function handleCellClick(e) {
-      const cell = e.target.closest(".cw-cell.used");
-      if (!cell) return;
-      const input = cell.querySelector(".cw-input");
-      if (!input) return;
-
-      const acrossId = input.dataset.acrossId;
-      const downId = input.dataset.downId;
-
-      if (acrossId && downId) {
-        // Feld gehört zu beiden Richtungen – aktuelle Richtung beibehalten
-      } else if (acrossId && !downId) {
-        setDirection("across");
-      } else if (downId && !acrossId) {
-        setDirection("down");
-      }
-
-      input.focus();
-      input.select();
-    }
-
-    function checkSolution() {
-      const message = document.getElementById("cw-message");
-      message.textContent = "";
-      message.className = "cw-message";
-
-      const inputs = document.querySelectorAll(".cw-input");
-      let hasEmpty = false;
-      let hasWrong = false;
-
-      inputs.forEach((inp) => {
-        const sol = inp.dataset.solution;
-        const val = inp.value.toUpperCase().trim();
-        inp.classList.remove("cw-wrong", "cw-correct");
-        if (!val) {
-          hasEmpty = true;
-        } else if (val !== sol) {
-          hasWrong = true;
-          inp.classList.add("cw-wrong");
-        } else {
-          inp.classList.add("cw-correct");
-        }
+      acrossWords.forEach((w) => {
+        const li = document.createElement("li");
+        li.textContent = w.clue;
+        li.dataset.wordIndex = placedWords.indexOf(w);
+        acrossOl.appendChild(li);
       });
 
-      if (hasEmpty) {
-        message.textContent = "Es sind noch leere Felder vorhanden.";
-        message.classList.add("err");
-        return;
-      }
-      if (hasWrong) {
-        message.textContent =
-          "Es sind noch Fehler vorhanden. Prüfe Deine Eingaben.";
-        message.classList.add("err");
-        return;
-      }
+      downWords.forEach((w) => {
+        const li = document.createElement("li");
+        li.textContent = w.clue;
+        li.dataset.wordIndex = placedWords.indexOf(w);
+        downOl.appendChild(li);
+      });
+    }
 
-      message.textContent =
-        "Gratuliere, alle Antworten sind korrekt! Das Passwort für Level 2 lautet: " +
-        FINAL_PASSWORD +
-        ".";
-      message.classList.add("ok");
+    // -------------------------------------------------------------
+    // 4. Interaktion
+    // -------------------------------------------------------------
+    function setActiveWordByCell(row, col) {
+      const k = key(row, col);
+      const input = cellInputs[k];
+      if (!input) return;
+
+      for (const w of placedWords) {
+        const idx = w.cells.findIndex((c) => c.r === row && c.c === col);
+        if (idx !== -1) {
+          activeWord = w;
+          activeIndex = idx;
+          break;
+        }
+      }
+    }
+
+    function moveToNextCell() {
+      if (!activeWord) return;
+      if (activeIndex < activeWord.cells.length - 1) {
+        activeIndex++;
+        const { r, c } = activeWord.cells[activeIndex];
+        const inp = cellInputs[key(r, c)];
+        if (inp) inp.focus();
+      }
+    }
+
+    function onCellInput(e) {
+      const inp = e.target;
+      const val = (inp.value || "").toUpperCase();
+      inp.value = val.slice(-1);
+      const r = parseInt(inp.dataset.row, 10);
+      const c = parseInt(inp.dataset.col, 10);
+      setActiveWordByCell(r, c);
+      moveToNextCell();
+    }
+
+    function onCellFocus(e) {
+      const inp = e.target;
+      const r = parseInt(inp.dataset.row, 10);
+      const c = parseInt(inp.dataset.col, 10);
+      setActiveWordByCell(r, c);
     }
 
     function clearAll() {
-      const inputs = document.querySelectorAll(".cw-input");
-      inputs.forEach((inp) => {
-        inp.value = "";
-        inp.classList.remove("cw-wrong", "cw-correct");
-      });
-      const message = document.getElementById("cw-message");
-      message.textContent = "";
-      message.className = "cw-message";
+      Object.values(cellInputs).forEach((inp) => (inp.value = ""));
+      showMessage("", "");
     }
 
-    /************************************************************
-     * INITIALISIERUNG
-     ************************************************************/
+    function showMessage(text, type) {
+      const msgEl = document.getElementById("cw-message");
+      msgEl.textContent = text;
+      msgEl.classList.remove("ok", "err");
+      if (type) msgEl.classList.add(type);
+    }
 
-    placeAllWords();
+    function checkSolution() {
+      let allFilled = true;
+      let allCorrect = true;
+
+      for (const w of placedWords) {
+        let wordFilled = true;
+        let wordCorrect = true;
+
+        w.cells.forEach((cell, idx) => {
+          const inp = cellInputs[key(cell.r, cell.c)];
+          const ch = (inp.value || "").toUpperCase();
+          if (!ch) wordFilled = false;
+          if (ch !== w.answer[idx]) wordCorrect = false;
+        });
+
+        if (!wordFilled) allFilled = false;
+        if (!wordCorrect) allCorrect = false;
+      }
+
+      if (!allFilled) {
+        showMessage("Es sind noch leere Felder vorhanden.", "err");
+      } else if (!allCorrect) {
+        showMessage("Einige Antworten sind noch falsch.", "err");
+      } else {
+        showMessage("Gratuliere! Alle Antworten sind korrekt.", "ok");
+      }
+    }
+
+    function initModeButtons() {
+      const buttons = document.querySelectorAll(".cw-mode-button");
+      buttons.forEach((btn) => {
+        btn.addEventListener("click", () => {
+          buttons.forEach((b) => b.classList.remove("active"));
+          btn.classList.add("active");
+          // aktuell dient der Modus nur der Optik – die Eingabe funktioniert
+          // unabhängig von der gewählten Richtung.
+        });
+      });
+    }
+
+    // -------------------------------------------------------------
+    // 5. Start
+    // -------------------------------------------------------------
+    buildAllWords();
     renderGrid();
+    renderClues();
+    initModeButtons();
 
-    document
-      .getElementById("btn-across")
-      .addEventListener("click", () => setDirection("across"));
-    document
-      .getElementById("btn-down")
-      .addEventListener("click", () => setDirection("down"));
-
-    document
-      .getElementById("btn-check")
-      .addEventListener("click", checkSolution);
-    document
-      .getElementById("btn-clear")
-      .addEventListener("click", clearAll);
-
-    document
-      .getElementById("cw-grid")
-      .addEventListener("click", handleCellClick);
-    document.addEventListener("keydown", handleInputKey);
+    document.getElementById("check-btn").addEventListener("click", checkSolution);
+    document.getElementById("clear-btn").addEventListener("click", clearAll);
   </script>
 </body>
 </html>
