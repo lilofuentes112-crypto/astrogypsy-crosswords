@@ -97,14 +97,14 @@
       position: relative;
       width: var(--cell-size);
       height: var(--cell-size);
-      border: none; /* Standard: kein Raster sichtbar */
+      border: none; /* leere Felder ohne Raster */
       display: flex;
       align-items: center;
       justify-content: center;
     }
 
     .cw-cell.used {
-      border: 1px solid #c07a3a; /* Nur benutzte Felder zeigen das Raster */
+      border: 1px solid #c07a3a; /* nur benutzte Felder zeigen das Raster */
       background: rgba(0, 0, 0, 0.65);
     }
 
@@ -189,10 +189,6 @@
     .cw-clues li {
       margin-bottom: 2px;
     }
-
-    a {
-      color: #f5c08a;
-    }
   </style>
 </head>
 <body>
@@ -228,23 +224,18 @@
 
   <script>
     /************************************************************
-     * KONFIGURATION – HIER PASST DU PRO LEVEL NUR DIESE TEILE AN
+     * KONFIGURATION – pro Rätsel nur diese Werte anpassen
      ************************************************************/
 
-    // Hintergrundbild nur innerhalb des Rätsel-Quadrats:
     const BACKGROUND_URL =
       "https://static.wixstatic.com/media/6d3632_8671621dade74457977217105254aadf~mv2.png";
 
-    // Passwort, das nach erfolgreichem Lösen angezeigt wird
     const FINAL_PASSWORD = "STIERKRAFT";
 
-    // Interne Gittergröße für den Algorithmus (sichtbar wird nur
-    // der tatsächlich benutzte Ausschnitt)
     const GRID_ROWS = 25;
     const GRID_COLS = 25;
 
-    // Liste der Wörter + Hinweise
-    // direction: "across" = waagrecht, "down" = senkrecht
+    // WICHTIG: clues OHNE führende Nummern schreiben
     const WORDS_INPUT = [
       {
         answer: "ASTROLOGIE",
@@ -269,7 +260,7 @@
     ];
 
     /************************************************************
-     * AB HIER NICHTS MEHR ÄNDERN (nur bei Bedarf)
+     * AB HIER NICHTS MEHR ÄNDERN
      ************************************************************/
 
     const grid = [];
@@ -286,7 +277,6 @@
     let minRow = GRID_ROWS, maxRow = -1, minCol = GRID_COLS, maxCol = -1;
 
     function placeAllWords() {
-      // Ersten Begriff: einfach in die Mitte legen
       const sorted = [...WORDS_INPUT].map((w, i) => ({
         ...w,
         id: i,
@@ -301,14 +291,13 @@
         } else {
           const ok = placeNextWord(word);
           if (!ok) {
-            // Fallback: versuche irgendwo am Rand (ohne Kreuzung, wenn nötig),
-            // damit der Generator nicht komplett scheitert.
-            fallbackPlaceWord(word);
+            // Wenn ein Wort sich überhaupt nicht kreuzen lässt,
+            // wird es weggelassen (kein einsames Wort im Raster).
+            console.warn("Konnte Wort nicht platzieren (wird ausgelassen):", word.answer);
           }
         }
       }
 
-      // Boundings bestimmen
       for (let r = 0; r < GRID_ROWS; r++) {
         for (let c = 0; c < GRID_COLS; c++) {
           if (grid[r][c]) {
@@ -320,7 +309,6 @@
         }
       }
 
-      // Nummern vergeben
       numberWords();
     }
 
@@ -343,7 +331,7 @@
             if (word.direction === "across") {
               if (wp.dir === "across") continue;
               const row = wp.row + i;
-              const col = wp.col - j; // j-te Stelle soll bei (row, col + j) landen
+              const col = wp.col - j;
               candidates.push({ word, row, col });
             } else {
               if (wp.dir === "down") continue;
@@ -364,31 +352,7 @@
       return false;
     }
 
-    function fallbackPlaceWord(word) {
-      const len = word.answer.length;
-
-      if (word.direction === "across") {
-        for (let r = 1; r < GRID_ROWS - 1; r++) {
-          for (let c = 1; c <= GRID_COLS - len - 1; c++) {
-            if (canPlaceWord(word, r, c, true)) {
-              writeWordToGrid(word, r, c);
-              return;
-            }
-          }
-        }
-      } else {
-        for (let r = 1; r <= GRID_ROWS - len - 1; r++) {
-          for (let c = 1; c < GRID_COLS - 1; c++) {
-            if (canPlaceWord(word, r, c, true)) {
-              writeWordToGrid(word, r, c);
-              return;
-            }
-          }
-        }
-      }
-    }
-
-    function canPlaceWord(word, row, col, allowNoIntersection = false) {
+    function canPlaceWord(word, row, col) {
       const len = word.answer.length;
       let intersects = false;
 
@@ -404,14 +368,11 @@
           if (cell && cell.letter !== word.answer[i]) return false;
           if (cell && cell.letter === word.answer[i]) intersects = true;
 
-          // Seiten-Nachbarn (oben/unten) dürfen keine eigenständigen
-          // Wörter berühren, außer an Kreuzungen
           const up = r - 1 >= 0 ? grid[r - 1][c] : null;
           const down = r + 1 < GRID_ROWS ? grid[r + 1][c] : null;
           if ((up && !cell) || (down && !cell)) return false;
         }
 
-        // Zellen vor/nach dem Wort dürfen nicht belegt sein
         if (col - 1 >= 0 && grid[row][col - 1]) return false;
         if (col + len < GRID_COLS && grid[row][col + len]) return false;
       } else {
@@ -435,9 +396,8 @@
         if (row + len < GRID_ROWS && grid[row + len][col]) return false;
       }
 
-      if (!allowNoIntersection && wordsPlaced.length > 0 && !intersects) {
-        return false;
-      }
+      // mindestens ein gemeinsamer Buchstabe mit einem bereits gesetzten Wort
+      if (wordsPlaced.length > 0 && !intersects) return false;
 
       return true;
     }
@@ -458,18 +418,18 @@
         for (let i = 0; i < letters.length; i++) {
           const r = row;
           const c = col + i;
-          placeLetter(r, c, letters[i], word, "across", i);
+          placeLetter(r, c, letters[i], word, "across");
         }
       } else {
         for (let i = 0; i < letters.length; i++) {
           const r = row + i;
           const c = col;
-          placeLetter(r, c, letters[i], word, "down", i);
+          placeLetter(r, c, letters[i], word, "down");
         }
       }
     }
 
-    function placeLetter(r, c, letter, word, dir, indexInWord) {
+    function placeLetter(r, c, letter, word, dir) {
       let cell = grid[r][c];
       if (!cell) {
         cell = {
@@ -491,13 +451,11 @@
       const startMap = new Map(); // id -> number
 
       for (const wp of wordsPlaced) {
-        const { dir, row, col, answer, id } = wp;
-
-        const startPos = { row, col };
-        const r = startPos.row;
-        const c = startPos.col;
-
+        const { dir, row, col, id } = wp;
+        const r = row;
+        const c = col;
         const key = r + "," + c;
+
         let cell = cellMap.get(key);
         if (!cell) {
           cell = {
@@ -518,12 +476,10 @@
         }
       }
 
-      // Restliche Zellen in cellMap füllen
       for (let r = 0; r < GRID_ROWS; r++) {
         for (let c = 0; c < GRID_COLS; c++) {
           const gcell = grid[r][c];
           if (!gcell) continue;
-
           const key = r + "," + c;
           if (!cellMap.has(key)) {
             cellMap.set(key, {
@@ -538,7 +494,6 @@
         }
       }
 
-      // Clues-Liste aufbauen
       const acrossList = document.getElementById("cw-clues-across");
       const downList = document.getElementById("cw-clues-down");
       acrossList.innerHTML = "";
@@ -547,10 +502,9 @@
       const placedById = new Map();
       for (const w of wordsPlaced) placedById.set(w.id, w);
 
-      const wordsInOriginalOrder = WORDS_INPUT.map((w, i) => ({
-        ...placedById.get(i),
-        clue: w.clue,
-      }));
+      const wordsInOriginalOrder = WORDS_INPUT
+        .map((w, i) => placedById.get(i))
+        .filter(Boolean);
 
       for (const wp of wordsInOriginalOrder) {
         const num = startMap.get(wp.id);
@@ -578,7 +532,6 @@
         return;
       }
 
-      const visibleRows = maxRow - minRow + 1;
       const visibleCols = maxCol - minCol + 1;
       container.style.gridTemplateColumns =
         "repeat(" + visibleCols + ", var(--cell-size))";
