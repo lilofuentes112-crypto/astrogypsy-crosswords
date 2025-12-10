@@ -4,428 +4,560 @@
   <meta charset="UTF-8" />
   <title>Zertifikats-Kreuzworträtsel – Level 1</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
   <style>
+    :root {
+      --cell-size: 32px;
+    }
+
+    @media (max-width: 600px) {
+      :root {
+        --cell-size: 26px;
+      }
+    }
+
     * {
       box-sizing: border-box;
     }
 
     body {
       margin: 0;
-      padding: 0;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-        sans-serif;
-      background: #000; /* bleibt im Iframe innen schwarz */
-      color: #f5e0c0;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
       align-items: flex-start;
-      min-height: 100vh;
+      background: #000;
+      color: #f5c08a;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     }
 
     .cw-wrapper {
-      position: relative;
+      margin: 24px 8px;
+      padding: 24px 24px 32px;
+      border: 2px solid #c07a3a;
+      border-radius: 6px;
+      background: radial-gradient(circle at top, #1b130c 0%, #050505 60%, #000 100%);
+      max-width: 640px;
       width: 100%;
-      max-width: 600px;
-      margin: 24px auto;
-      padding: 0 8px;
     }
 
-    .cw-content {
-      position: relative;
-      background: rgba(0, 0, 0, 0.65);
-      border: 1px solid #8c5b2f;
-      border-radius: 8px;
-      padding: 16px 16px 20px;
-      backdrop-filter: blur(2px);
-    }
-
-    h1 {
-      margin: 0 0 12px;
-      font-size: 20px;
+    .cw-title {
       text-align: center;
+      font-weight: 600;
+      margin-bottom: 12px;
+      font-size: 20px;
     }
 
-    .direction-toggle {
+    .cw-dir-toggle {
+      display: flex;
+      justify-content: center;
+      gap: 4px;
+      margin-bottom: 12px;
+    }
+
+    .cw-dir-toggle button {
+      border: 1px solid #c07a3a;
+      background: #3a210f;
+      color: #f5c08a;
+      padding: 4px 12px;
+      font-size: 13px;
+      cursor: pointer;
+      border-radius: 4px;
+    }
+
+    .cw-dir-toggle button.cw-active {
+      background: #c07a3a;
+      color: #120804;
+    }
+
+    .cw-board {
+      margin: 0 auto 16px;
+      padding: 8px;
+      border: 1px solid #c07a3a;
+      border-radius: 4px;
+      background: #000;
+    }
+
+    .cw-background {
+      position: relative;
+      background-position: center;
+      background-size: cover;
+      background-repeat: no-repeat;
+      padding: 12px;
+    }
+
+    .cw-grid {
+      display: inline-grid;
+      grid-template-columns: repeat(auto-fit, var(--cell-size));
+      gap: 0;
+      background: rgba(0, 0, 0, 0.3);
+      border-radius: 2px;
+    }
+
+    .cw-cell {
+      position: relative;
+      width: var(--cell-size);
+      height: var(--cell-size);
+      border: none; /* Standard: kein Raster sichtbar */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .cw-cell.used {
+      border: 1px solid #c07a3a; /* Nur benutzte Felder zeigen das Raster */
+      background: rgba(0, 0, 0, 0.65);
+    }
+
+    .cw-number {
+      position: absolute;
+      top: 2px;
+      left: 3px;
+      font-size: 9px;
+      color: #f5c08a;
+      pointer-events: none;
+    }
+
+    .cw-input {
+      width: 80%;
+      height: 80%;
+      text-align: center;
+      font-size: 16px;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: #f5c08a;
+      text-transform: uppercase;
+    }
+
+    .cw-input.cw-correct {
+      color: #a7ff9e;
+    }
+
+    .cw-input.cw-wrong {
+      color: #ff7d7d;
+    }
+
+    .cw-controls {
       display: flex;
       justify-content: center;
       gap: 8px;
       margin-bottom: 10px;
     }
 
-    .direction-toggle button {
-      border: 1px solid #8c5b2f;
-      background: rgba(0, 0, 0, 0.7);
-      color: #f5e0c0;
-      padding: 4px 10px;
-      border-radius: 4px;
+    .cw-controls button {
+      border: 1px solid #c07a3a;
+      background: #3a210f;
+      color: #f5c08a;
+      padding: 4px 14px;
       font-size: 13px;
       cursor: pointer;
+      border-radius: 4px;
     }
 
-    .direction-toggle button.active {
-      background: #8c5b2f;
-      color: #110b06;
-      font-weight: 600;
-    }
-
-    .grid {
-      margin: 0 auto 10px;
-      border: 2px solid #8c5b2f;
-      padding: 4px;
-      display: inline-block;
-      background-size: cover;      /* Hintergrundbild */
-      background-position: center; /* im Quadrat zentriert */
-      background-repeat: no-repeat;
-    }
-
-    .grid-row {
-      display: flex;
-    }
-
-    .grid-cell {
-      position: relative;
-      width: 28px;
-      height: 28px;
-      /* standardmäßig UNSICHTBAR */
-      border: none;
-      background: transparent;
-    }
-
-    /* Nur aktive Felder sichtbar machen */
-    .grid-cell.active {
-      border: 1px solid #8c5b2f;
-      background: rgba(0, 0, 0, 0.45);
-    }
-
-    .grid-cell input {
-      width: 100%;
-      height: 100%;
-      border: none;
-      outline: none;
-      background: transparent;
-      color: #f5e0c0;
-      text-transform: uppercase;
+    .cw-message {
       text-align: center;
-      font-size: 16px;
-      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 12px;
+      min-height: 1.2em;
+    }
+
+    .cw-message.ok {
+      color: #a7ff9e;
+    }
+
+    .cw-message.err {
+      color: #ff9d8a;
+    }
+
+    .cw-clues {
+      font-size: 13px;
+      line-height: 1.4;
+    }
+
+    .cw-clues h3 {
+      font-size: 14px;
+      margin: 10px 0 4px;
+      text-transform: none;
+      color: #f5c08a;
+    }
+
+    .cw-clues ol {
+      margin: 0 0 6px 20px;
       padding: 0;
     }
 
-    /* Inaktive Felder: Eingabe deaktivieren und unsichtbar machen */
-    .grid-cell:not(.active) input {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    .grid-cell input::placeholder {
-      color: rgba(245, 224, 192, 0.4);
-    }
-
-    .grid-cell.wrong input {
-      color: #ff6b6b;
-    }
-
-    .cell-number {
-      position: absolute;
-      top: 1px;
-      left: 2px;
-      font-size: 8px;
-      color: #f5e0c0;
-      opacity: 0.9;
-      pointer-events: none;
-    }
-
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 6px;
-    }
-
-    .controls button {
-      border: 1px solid #8c5b2f;
-      background: #8c5b2f;
-      color: #110b06;
-      padding: 4px 12px;
-      border-radius: 4px;
-      font-size: 13px;
-      cursor: pointer;
-    }
-
-    .controls button.secondary {
-      background: transparent;
-      color: #f5e0c0;
-    }
-
-    .feedback {
-      text-align: center;
-      font-size: 12px;
-      margin-bottom: 8px;
-      min-height: 18px;
-    }
-
-    .feedback.error {
-      color: #ffb3b3;
-    }
-
-    .feedback.success {
-      color: #b6ffb3;
-    }
-
-    .clue-section {
-      margin-top: 4px;
-      font-size: 13px;
-    }
-
-    .clue-section h2 {
-      font-size: 14px;
-      margin: 4px 0;
-    }
-
-    .clue-list {
-      list-style: none;
-      padding-left: 0;
-      margin: 0 0 4px;
-    }
-
-    .clue-list li {
+    .cw-clues li {
       margin-bottom: 2px;
     }
 
-    .clue-number {
-      font-weight: 600;
-      margin-right: 4px;
-    }
-
-    @media (max-width: 480px) {
-      .grid-cell {
-        width: 22px;
-        height: 22px;
-      }
-
-      .grid {
-        padding: 3px;
-      }
-
-      .cw-content {
-        padding: 12px;
-      }
-
-      h1 {
-        font-size: 18px;
-      }
+    a {
+      color: #f5c08a;
     }
   </style>
 </head>
 <body>
   <div class="cw-wrapper">
-    <div class="cw-content">
-      <h1>Zertifikats-Kreuzworträtsel – Level 1</h1>
+    <div class="cw-title">Zertifikats-Kreuzworträtsel – Level 1</div>
 
-      <div class="direction-toggle">
-        <button type="button" data-direction="across" class="active">
-          Waagrecht
-        </button>
-        <button type="button" data-direction="down">
-          Senkrecht
-        </button>
+    <div class="cw-dir-toggle">
+      <button id="btn-across" class="cw-active" data-dir="across">Waagrecht</button>
+      <button id="btn-down" data-dir="down">Senkrecht</button>
+    </div>
+
+    <div class="cw-board">
+      <div id="cw-background" class="cw-background">
+        <div id="cw-grid" class="cw-grid"></div>
       </div>
+    </div>
 
-      <div id="cw-grid" class="grid"></div>
+    <div class="cw-controls">
+      <button id="btn-check">Lösung prüfen</button>
+      <button id="btn-clear">Alles löschen</button>
+    </div>
 
-      <div class="controls">
-        <button id="check-btn">Lösung prüfen</button>
-        <button id="clear-btn" class="secondary">Alles löschen</button>
-      </div>
+    <div id="cw-message" class="cw-message"></div>
 
-      <div id="feedback" class="feedback"></div>
+    <div class="cw-clues">
+      <h3>Waagrecht</h3>
+      <ol id="cw-clues-across"></ol>
 
-      <div class="clue-section">
-        <h2>Waagrecht</h2>
-        <ul id="across-clues" class="clue-list"></ul>
-      </div>
-
-      <div class="clue-section">
-        <h2>Senkrecht</h2>
-        <ul id="down-clues" class="clue-list"></ul>
-      </div>
+      <h3>Senkrecht</h3>
+      <ol id="cw-clues-down"></ol>
     </div>
   </div>
 
   <script>
-    // HINTERGRUNDBILD NUR IM RÄTSEL-QUADRAT
-    const BACKGROUND_IMAGE_URL =
+    /************************************************************
+     * KONFIGURATION – HIER PASST DU PRO LEVEL NUR DIESE TEILE AN
+     ************************************************************/
+
+    // Hintergrundbild nur innerhalb des Rätsel-Quadrats:
+    const BACKGROUND_URL =
       "https://static.wixstatic.com/media/6d3632_8671621dade74457977217105254aadf~mv2.png";
 
-    // Raster-Größe
-    const GRID_ROWS = 15;
-    const GRID_COLS = 15;
+    // Passwort, das nach erfolgreichem Lösen angezeigt wird
+    const FINAL_PASSWORD = "STIERKRAFT";
 
-    // Rätsel-Wörter
-    const WORDS = [
+    // Interne Gittergröße für den Algorithmus (sichtbar wird nur
+    // der tatsächlich benutzte Ausschnitt)
+    const GRID_ROWS = 25;
+    const GRID_COLS = 25;
+
+    // Liste der Wörter + Hinweise
+    // direction: "across" = waagrecht, "down" = senkrecht
+    const WORDS_INPUT = [
       {
-        id: "1-across",
-        row: 7,
-        col: 2,
-        direction: "across",
         answer: "ASTROLOGIE",
-        clueNumber: "1",
-        clueText:
-          "Lehre von den Zusammenhängen zwischen Gestirnen und irdischen Ereignissen.",
+        clue: "Lehre von den Zusammenhängen zwischen Gestirnen und irdischen Ereignissen.",
+        direction: "across",
       },
       {
-        id: "2-down",
-        row: 3,
-        col: 9,
-        direction: "down",
         answer: "CHIRON",
-        clueNumber: "2",
-        clueText: "Planetoid, der oft mit Wunde und Heilung verbunden wird.",
+        clue: "Planetoid, der oft mit Wunde und Heilung verbunden wird.",
+        direction: "down",
       },
       {
-        id: "3-down",
-        row: 7,
-        col: 3,
-        direction: "down",
         answer: "ASPEKT",
-        clueNumber: "3",
-        clueText: "Winkelbeziehung zwischen zwei Planeten.",
+        clue: "Winkelbeziehung zwischen zwei Planeten.",
+        direction: "across",
       },
       {
-        id: "4-down",
-        row: 2,
-        col: 10,
+        answer: "STERNBILD",
+        clue: "Worin stehen die Sternbilder in der Nacht?",
         direction: "down",
-        answer: "ZODIAK",
-        clueNumber: "4",
-        clueText: "Worin stehen die Sternbilder in der Nacht?",
       },
     ];
 
-    const SUCCESS_MESSAGE =
-      "Gratuliere! Du hast Level 1 geschafft. Merke dir das Lösungswort, denn es ist dein Passwort für Level 2.";
-    const ERROR_MESSAGE =
-      "Es sind noch Fehler oder leere Felder vorhanden.";
+    /************************************************************
+     * AB HIER NICHTS MEHR ÄNDERN (nur bei Bedarf)
+     ************************************************************/
 
-    // --------------------------------------------------
-    // Grundaufbau
-    // --------------------------------------------------
-    const gridEl = document.getElementById("cw-grid");
-    const feedbackEl = document.getElementById("feedback");
-    const checkBtn = document.getElementById("check-btn");
-    const clearBtn = document.getElementById("clear-btn");
-    const acrossList = document.getElementById("across-clues");
-    const downList = document.getElementById("down-clues");
-    const directionButtons = document.querySelectorAll(
-      ".direction-toggle button"
-    );
-
-    let activeDirection = "across";
-    let cellMap = {}; // key: "r-c" -> { cell, input, letters: {wordId: {word, index}}, numberEl }
-
-    // Hintergrundbild NUR für das Quadrat
-    if (BACKGROUND_IMAGE_URL) {
-      gridEl.style.backgroundImage = `url("${BACKGROUND_IMAGE_URL}")`;
-    }
-
-    directionButtons.forEach((btn) => {
-      btn.addEventListener("click", () => {
-        activeDirection = btn.dataset.direction;
-        updateDirectionButtons();
-      });
-    });
-
-    function updateDirectionButtons() {
-      directionButtons.forEach((btn) => {
-        if (btn.dataset.direction === activeDirection) {
-          btn.classList.add("active");
-        } else {
-          btn.classList.remove("active");
-        }
-      });
-    }
-
-    // --------------------------------------------------
-    // Grid erzeugen
-    // --------------------------------------------------
-    function createEmptyGrid() {
-      for (let r = 0; r < GRID_ROWS; r++) {
-        const rowEl = document.createElement("div");
-        rowEl.className = "grid-row";
-
-        for (let c = 0; c < GRID_COLS; c++) {
-          const cell = document.createElement("div");
-          cell.className = "grid-cell";
-          cell.dataset.row = r;
-          cell.dataset.col = c;
-
-          const input = document.createElement("input");
-          input.type = "text";
-          input.maxLength = 1;
-          input.autocomplete = "off";
-          input.spellcheck = false;
-          input.inputMode = "latin";
-
-          input.addEventListener("input", handleInput);
-          input.addEventListener("keydown", handleKeyDown);
-          cell.addEventListener("click", () => handleCellClick(r, c));
-
-          cell.appendChild(input);
-          rowEl.appendChild(cell);
-
-          cellMap[`${r}-${c}`] = {
-            cell,
-            input,
-            letters: {},
-            numberEl: null,
-          };
-        }
-
-        gridEl.appendChild(rowEl);
+    const grid = [];
+    for (let r = 0; r < GRID_ROWS; r++) {
+      const row = [];
+      for (let c = 0; c < GRID_COLS; c++) {
+        row.push(null);
       }
+      grid.push(row);
     }
 
-    function placeWords() {
-      for (const word of WORDS) {
-        const upper = word.answer.toUpperCase();
-        const len = upper.length;
+    const wordsPlaced = []; // {id, answer, clue, dir, row, col}
+    const cellMap = new Map(); // "r,c" -> { row, col, solution, acrossId, downId, number }
+    let minRow = GRID_ROWS, maxRow = -1, minCol = GRID_COLS, maxCol = -1;
 
-        for (let i = 0; i < len; i++) {
-          const r =
-            word.row + (word.direction === "down" ? i : 0);
-          const c =
-            word.col + (word.direction === "across" ? i : 0);
+    function placeAllWords() {
+      // Ersten Begriff: einfach in die Mitte legen
+      const sorted = [...WORDS_INPUT].map((w, i) => ({
+        ...w,
+        id: i,
+        answer: w.answer.replace(/\s+/g, "").toUpperCase(),
+      }));
 
-          const key = `${r}-${c}`;
-          const cellObj = cellMap[key];
-          if (!cellObj) continue;
+      sorted.sort((a, b) => b.answer.length - a.answer.length);
 
-          cellObj.cell.classList.add("active");
-          cellObj.letters[word.id] = {
-            word,
-            index: i,
-          };
+      for (const word of sorted) {
+        if (wordsPlaced.length === 0) {
+          placeFirstWord(word);
+        } else {
+          const ok = placeNextWord(word);
+          if (!ok) {
+            // Fallback: versuche irgendwo am Rand (ohne Kreuzung, wenn nötig),
+            // damit der Generator nicht komplett scheitert.
+            fallbackPlaceWord(word);
+          }
+        }
+      }
 
-          // Nummern in die erste Zelle des Wortes
-          if (i === 0) {
-            if (!cellObj.numberEl) {
-              const numSpan = document.createElement("span");
-              numSpan.className = "cell-number";
-              numSpan.textContent = word.clueNumber;
-              cellObj.cell.appendChild(numSpan);
-              cellObj.numberEl = numSpan;
+      // Boundings bestimmen
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          if (grid[r][c]) {
+            if (r < minRow) minRow = r;
+            if (r > maxRow) maxRow = r;
+            if (c < minCol) minCol = c;
+            if (c > maxCol) maxCol = c;
+          }
+        }
+      }
+
+      // Nummern vergeben
+      numberWords();
+    }
+
+    function placeFirstWord(word) {
+      const row = Math.floor(GRID_ROWS / 2);
+      const col = Math.floor((GRID_COLS - word.answer.length) / 2);
+      writeWordToGrid(word, row, col);
+    }
+
+    function placeNextWord(word) {
+      const letters = word.answer.split("");
+      const candidates = [];
+
+      for (let wp of wordsPlaced) {
+        for (let i = 0; i < wp.answer.length; i++) {
+          const ch = wp.answer[i];
+          for (let j = 0; j < letters.length; j++) {
+            if (letters[j] !== ch) continue;
+
+            if (word.direction === "across") {
+              if (wp.dir === "across") continue;
+              const row = wp.row + i;
+              const col = wp.col - j; // j-te Stelle soll bei (row, col + j) landen
+              candidates.push({ word, row, col });
             } else {
-              cellObj.numberEl.textContent += "/" + word.clueNumber;
+              if (wp.dir === "down") continue;
+              const row = wp.row - j;
+              const col = wp.col + i;
+              candidates.push({ word, row, col });
             }
           }
         }
+      }
 
-        // Clues-Liste füllen
+      for (const cand of candidates) {
+        if (canPlaceWord(cand.word, cand.row, cand.col)) {
+          writeWordToGrid(cand.word, cand.row, cand.col);
+          return true;
+        }
+      }
+      return false;
+    }
+
+    function fallbackPlaceWord(word) {
+      const len = word.answer.length;
+
+      if (word.direction === "across") {
+        for (let r = 1; r < GRID_ROWS - 1; r++) {
+          for (let c = 1; c <= GRID_COLS - len - 1; c++) {
+            if (canPlaceWord(word, r, c, true)) {
+              writeWordToGrid(word, r, c);
+              return;
+            }
+          }
+        }
+      } else {
+        for (let r = 1; r <= GRID_ROWS - len - 1; r++) {
+          for (let c = 1; c < GRID_COLS - 1; c++) {
+            if (canPlaceWord(word, r, c, true)) {
+              writeWordToGrid(word, r, c);
+              return;
+            }
+          }
+        }
+      }
+    }
+
+    function canPlaceWord(word, row, col, allowNoIntersection = false) {
+      const len = word.answer.length;
+      let intersects = false;
+
+      if (word.direction === "across") {
+        if (col < 0 || col + len > GRID_COLS) return false;
+        if (row < 0 || row >= GRID_ROWS) return false;
+
+        for (let i = 0; i < len; i++) {
+          const r = row;
+          const c = col + i;
+          const cell = grid[r][c];
+
+          if (cell && cell.letter !== word.answer[i]) return false;
+          if (cell && cell.letter === word.answer[i]) intersects = true;
+
+          // Seiten-Nachbarn (oben/unten) dürfen keine eigenständigen
+          // Wörter berühren, außer an Kreuzungen
+          const up = r - 1 >= 0 ? grid[r - 1][c] : null;
+          const down = r + 1 < GRID_ROWS ? grid[r + 1][c] : null;
+          if ((up && !cell) || (down && !cell)) return false;
+        }
+
+        // Zellen vor/nach dem Wort dürfen nicht belegt sein
+        if (col - 1 >= 0 && grid[row][col - 1]) return false;
+        if (col + len < GRID_COLS && grid[row][col + len]) return false;
+      } else {
+        if (row < 0 || row + len > GRID_ROWS) return false;
+        if (col < 0 || col >= GRID_COLS) return false;
+
+        for (let i = 0; i < len; i++) {
+          const r = row + i;
+          const c = col;
+          const cell = grid[r][c];
+
+          if (cell && cell.letter !== word.answer[i]) return false;
+          if (cell && cell.letter === word.answer[i]) intersects = true;
+
+          const left = c - 1 >= 0 ? grid[r][c - 1] : null;
+          const right = c + 1 < GRID_COLS ? grid[r][c + 1] : null;
+          if ((left && !cell) || (right && !cell)) return false;
+        }
+
+        if (row - 1 >= 0 && grid[row - 1][col]) return false;
+        if (row + len < GRID_ROWS && grid[row + len][col]) return false;
+      }
+
+      if (!allowNoIntersection && wordsPlaced.length > 0 && !intersects) {
+        return false;
+      }
+
+      return true;
+    }
+
+    function writeWordToGrid(word, row, col) {
+      wordsPlaced.push({
+        id: word.id,
+        answer: word.answer,
+        clue: word.clue,
+        dir: word.direction,
+        row,
+        col,
+      });
+
+      const letters = word.answer.split("");
+
+      if (word.direction === "across") {
+        for (let i = 0; i < letters.length; i++) {
+          const r = row;
+          const c = col + i;
+          placeLetter(r, c, letters[i], word, "across", i);
+        }
+      } else {
+        for (let i = 0; i < letters.length; i++) {
+          const r = row + i;
+          const c = col;
+          placeLetter(r, c, letters[i], word, "down", i);
+        }
+      }
+    }
+
+    function placeLetter(r, c, letter, word, dir, indexInWord) {
+      let cell = grid[r][c];
+      if (!cell) {
+        cell = {
+          letter,
+          acrossId: null,
+          downId: null,
+        };
+        grid[r][c] = cell;
+      }
+      if (dir === "across") {
+        cell.acrossId = word.id;
+      } else {
+        cell.downId = word.id;
+      }
+    }
+
+    function numberWords() {
+      let counter = 1;
+      const startMap = new Map(); // id -> number
+
+      for (const wp of wordsPlaced) {
+        const { dir, row, col, answer, id } = wp;
+
+        const startPos = { row, col };
+        const r = startPos.row;
+        const c = startPos.col;
+
+        const key = r + "," + c;
+        let cell = cellMap.get(key);
+        if (!cell) {
+          cell = {
+            row: r,
+            col: c,
+            solution: grid[r][c].letter,
+            acrossId: grid[r][c].acrossId ?? null,
+            downId: grid[r][c].downId ?? null,
+            number: null,
+          };
+          cellMap.set(key, cell);
+        }
+
+        if (!cell.number) {
+          cell.number = counter;
+          startMap.set(id, counter);
+          counter++;
+        }
+      }
+
+      // Restliche Zellen in cellMap füllen
+      for (let r = 0; r < GRID_ROWS; r++) {
+        for (let c = 0; c < GRID_COLS; c++) {
+          const gcell = grid[r][c];
+          if (!gcell) continue;
+
+          const key = r + "," + c;
+          if (!cellMap.has(key)) {
+            cellMap.set(key, {
+              row: r,
+              col: c,
+              solution: gcell.letter,
+              acrossId: gcell.acrossId ?? null,
+              downId: gcell.downId ?? null,
+              number: null,
+            });
+          }
+        }
+      }
+
+      // Clues-Liste aufbauen
+      const acrossList = document.getElementById("cw-clues-across");
+      const downList = document.getElementById("cw-clues-down");
+      acrossList.innerHTML = "";
+      downList.innerHTML = "";
+
+      const placedById = new Map();
+      for (const w of wordsPlaced) placedById.set(w.id, w);
+
+      const wordsInOriginalOrder = WORDS_INPUT.map((w, i) => ({
+        ...placedById.get(i),
+        clue: w.clue,
+      }));
+
+      for (const wp of wordsInOriginalOrder) {
+        const num = startMap.get(wp.id);
+        if (!num) continue;
         const li = document.createElement("li");
-        li.innerHTML =
-          `<span class="clue-number">${word.clueNumber}.</span> ${word.clueText}`;
-        if (word.direction === "across") {
+        li.textContent = `${num}. ${wp.clue}`;
+        if (wp.dir === "across") {
           acrossList.appendChild(li);
         } else {
           downList.appendChild(li);
@@ -433,200 +565,256 @@
       }
     }
 
-    // --------------------------------------------------
-    // Navigation / Eingabe
-    // --------------------------------------------------
-    function getCellObj(r, c) {
-      return cellMap[`${r}-${c}`] || null;
+    function renderGrid() {
+      const bg = document.getElementById("cw-background");
+      if (BACKGROUND_URL) {
+        bg.style.backgroundImage = `url("${BACKGROUND_URL}")`;
+      }
+
+      const container = document.getElementById("cw-grid");
+      container.innerHTML = "";
+
+      if (minRow > maxRow || minCol > maxCol) {
+        return;
+      }
+
+      const visibleRows = maxRow - minRow + 1;
+      const visibleCols = maxCol - minCol + 1;
+      container.style.gridTemplateColumns =
+        "repeat(" + visibleCols + ", var(--cell-size))";
+
+      for (let r = minRow; r <= maxRow; r++) {
+        for (let c = minCol; c <= maxCol; c++) {
+          const gcell = grid[r][c];
+          const div = document.createElement("div");
+          div.className = "cw-cell";
+          div.dataset.row = r;
+          div.dataset.col = c;
+
+          if (gcell) {
+            div.classList.add("used");
+            const key = r + "," + c;
+            const cmap = cellMap.get(key);
+
+            if (cmap && cmap.number) {
+              const numSpan = document.createElement("span");
+              numSpan.className = "cw-number";
+              numSpan.textContent = cmap.number;
+              div.appendChild(numSpan);
+            }
+
+            const input = document.createElement("input");
+            input.type = "text";
+            input.maxLength = 1;
+            input.className = "cw-input";
+            input.autocomplete = "off";
+            input.dataset.row = r;
+            input.dataset.col = c;
+            input.dataset.solution = gcell.letter;
+            input.dataset.acrossId = gcell.acrossId ?? "";
+            input.dataset.downId = gcell.downId ?? "";
+            div.appendChild(input);
+          }
+
+          container.appendChild(div);
+        }
+      }
     }
 
-    function handleCellClick(row, col) {
-      const cellObj = getCellObj(row, col);
-      if (!cellObj || !Object.keys(cellObj.letters).length) return;
+    /************************************************************
+     * INTERAKTION
+     ************************************************************/
 
-      const wordForCurrentDir = getWordEntryForDirection(
-        cellObj,
-        activeDirection
+    let currentDirection = "across";
+
+    function setDirection(dir) {
+      currentDirection = dir;
+      document
+        .getElementById("btn-across")
+        .classList.toggle("cw-active", dir === "across");
+      document
+        .getElementById("btn-down")
+        .classList.toggle("cw-active", dir === "down");
+    }
+
+    function getCellInput(row, col) {
+      return document.querySelector(
+        `.cw-input[data-row="${row}"][data-col="${col}"]`
       );
-      if (!wordForCurrentDir) {
-        const altDir =
-          activeDirection === "across" ? "down" : "across";
-        const wordAlt = getWordEntryForDirection(cellObj, altDir);
-        if (wordAlt) {
-          activeDirection = altDir;
-          updateDirectionButtons();
-        }
-      }
-
-      cellObj.input.focus();
-      cellObj.input.select();
     }
 
-    function getWordEntryForDirection(cellObj, dir) {
-      for (const id in cellObj.letters) {
-        if (cellObj.letters[id].word.direction === dir) {
-          return cellObj.letters[id];
+    function moveFocus(row, col, dir, step) {
+      let r = Number(row);
+      let c = Number(col);
+      while (true) {
+        if (dir === "across") {
+          c += step;
+        } else {
+          r += step;
         }
+        const next = getCellInput(r, c);
+        if (!next) return;
+        next.focus();
+        next.select();
+        return;
       }
-      return null;
     }
 
-    function handleInput(e) {
+    function handleInputKey(e) {
       const input = e.target;
-      let value = input.value.toUpperCase();
-      input.value = value.slice(-1);
+      if (!input.classList.contains("cw-input")) return;
 
-      const cell = input.parentElement;
-      const r = parseInt(cell.dataset.row, 10);
-      const c = parseInt(cell.dataset.col, 10);
-      const cellObj = getCellObj(r, c);
-      if (!cellObj) return;
+      const row = Number(input.dataset.row);
+      const col = Number(input.dataset.col);
 
-      cellObj.cell.classList.remove("wrong");
-      feedbackEl.textContent = "";
-      feedbackEl.className = "feedback";
+      const key = e.key;
 
-      const entry = getWordEntryForDirection(cellObj, activeDirection)
-        || Object.values(cellObj.letters)[0];
-
-      if (!entry) return;
-
-      const word = entry.word;
-      const nextIndex = entry.index + 1;
-      if (nextIndex >= word.answer.length) return;
-
-      const nextRow =
-        word.row + (word.direction === "down" ? nextIndex : 0);
-      const nextCol =
-        word.col + (word.direction === "across" ? nextIndex : 0);
-      const nextCellObj = getCellObj(nextRow, nextCol);
-      if (nextCellObj) {
-        nextCellObj.input.focus();
-        nextCellObj.input.select();
-      }
-    }
-
-    function handleKeyDown(e) {
-      const input = e.target;
-      const cell = input.parentElement;
-      const r = parseInt(cell.dataset.row, 10);
-      const c = parseInt(cell.dataset.col, 10);
-
-      const cellObj = getCellObj(r, c);
-      if (!cellObj) return;
-
-      if (e.key === "Backspace" && !input.value) {
-        const entry =
-          getWordEntryForDirection(cellObj, activeDirection) ||
-          Object.values(cellObj.letters)[0];
-        if (!entry) return;
-
-        if (entry.index === 0) return;
-
-        const prevIndex = entry.index - 1;
-        const prevRow =
-          entry.word.row +
-          (entry.word.direction === "down" ? prevIndex : 0);
-        const prevCol =
-          entry.word.col +
-          (entry.word.direction === "across" ? prevIndex : 0);
-        const prevCellObj = getCellObj(prevRow, prevCol);
-        if (prevCellObj) {
-          e.preventDefault();
-          prevCellObj.input.focus();
-          prevCellObj.input.select();
-        }
-      }
-
-      let targetRow = r;
-      let targetCol = c;
-      let move = false;
-
-      if (e.key === "ArrowRight") {
-        targetCol++;
-        move = true;
-      } else if (e.key === "ArrowLeft") {
-        targetCol--;
-        move = true;
-      } else if (e.key === "ArrowUp") {
-        targetRow--;
-        move = true;
-      } else if (e.key === "ArrowDown") {
-        targetRow++;
-        move = true;
-      }
-
-      if (move) {
+      if (key.length === 1 && /^[a-zA-ZäöüÄÖÜß]$/.test(key)) {
         e.preventDefault();
-        const targetCellObj = getCellObj(targetRow, targetCol);
-        if (targetCellObj && targetCellObj.cell.classList.contains("active")) {
-          targetCellObj.input.focus();
-          targetCellObj.input.select();
+        input.value = key.toUpperCase();
+        input.classList.remove("cw-wrong", "cw-correct");
+        moveFocus(row, col, currentDirection, +1);
+        return;
+      }
+
+      if (key === "Backspace") {
+        e.preventDefault();
+        if (input.value) {
+          input.value = "";
+        } else {
+          moveFocus(row, col, currentDirection, -1);
         }
+        input.classList.remove("cw-wrong", "cw-correct");
+        return;
+      }
+
+      if (key === "Enter" || key === "Tab") {
+        e.preventDefault();
+        moveFocus(row, col, currentDirection, +1);
+        return;
+      }
+
+      if (key === "ArrowRight") {
+        e.preventDefault();
+        moveFocus(row, col, "across", +1);
+        return;
+      }
+      if (key === "ArrowLeft") {
+        e.preventDefault();
+        moveFocus(row, col, "across", -1);
+        return;
+      }
+      if (key === "ArrowDown") {
+        e.preventDefault();
+        moveFocus(row, col, "down", +1);
+        return;
+      }
+      if (key === "ArrowUp") {
+        e.preventDefault();
+        moveFocus(row, col, "down", -1);
+        return;
       }
     }
 
-    // --------------------------------------------------
-    // Prüfung & Reset
-    // --------------------------------------------------
-    function clearGrid() {
-      for (const key in cellMap) {
-        const obj = cellMap[key];
-        obj.input.value = "";
-        obj.cell.classList.remove("wrong");
+    function handleCellClick(e) {
+      const cell = e.target.closest(".cw-cell.used");
+      if (!cell) return;
+      const input = cell.querySelector(".cw-input");
+      if (!input) return;
+
+      const acrossId = input.dataset.acrossId;
+      const downId = input.dataset.downId;
+
+      if (acrossId && downId) {
+        // Feld gehört zu beiden Richtungen – aktuelle Richtung beibehalten
+      } else if (acrossId && !downId) {
+        setDirection("across");
+      } else if (downId && !acrossId) {
+        setDirection("down");
       }
-      feedbackEl.textContent = "";
-      feedbackEl.className = "feedback";
+
+      input.focus();
+      input.select();
     }
 
     function checkSolution() {
-      let allFilled = true;
-      let allCorrect = true;
+      const message = document.getElementById("cw-message");
+      message.textContent = "";
+      message.className = "cw-message";
 
-      for (const key in cellMap) {
-        cellMap[key].cell.classList.remove("wrong");
-      }
+      const inputs = document.querySelectorAll(".cw-input");
+      let hasEmpty = false;
+      let hasWrong = false;
 
-      for (const word of WORDS) {
-        const upper = word.answer.toUpperCase();
-        const len = upper.length;
-
-        for (let i = 0; i < len; i++) {
-          const r =
-            word.row + (word.direction === "down" ? i : 0);
-          const c =
-            word.col + (word.direction === "across" ? i : 0);
-          const cellObj = getCellObj(r, c);
-          if (!cellObj) continue;
-
-          const val = (cellObj.input.value || "").toUpperCase();
-          if (!val) {
-            allFilled = false;
-            allCorrect = false;
-            cellObj.cell.classList.add("wrong");
-          } else if (val !== upper[i]) {
-            allCorrect = false;
-            cellObj.cell.classList.add("wrong");
-          }
+      inputs.forEach((inp) => {
+        const sol = inp.dataset.solution;
+        const val = inp.value.toUpperCase().trim();
+        inp.classList.remove("cw-wrong", "cw-correct");
+        if (!val) {
+          hasEmpty = true;
+        } else if (val !== sol) {
+          hasWrong = true;
+          inp.classList.add("cw-wrong");
+        } else {
+          inp.classList.add("cw-correct");
         }
+      });
+
+      if (hasEmpty) {
+        message.textContent = "Es sind noch leere Felder vorhanden.";
+        message.classList.add("err");
+        return;
+      }
+      if (hasWrong) {
+        message.textContent =
+          "Es sind noch Fehler vorhanden. Prüfe Deine Eingaben.";
+        message.classList.add("err");
+        return;
       }
 
-      if (allCorrect && allFilled) {
-        feedbackEl.textContent = SUCCESS_MESSAGE;
-        feedbackEl.className = "feedback success";
-      } else {
-        feedbackEl.textContent = ERROR_MESSAGE;
-        feedbackEl.className = "feedback error";
-      }
+      message.textContent =
+        "Gratuliere, alle Antworten sind korrekt! Das Passwort für Level 2 lautet: " +
+        FINAL_PASSWORD +
+        ".";
+      message.classList.add("ok");
     }
 
-    checkBtn.addEventListener("click", checkSolution);
-    clearBtn.addEventListener("click", clearGrid);
+    function clearAll() {
+      const inputs = document.querySelectorAll(".cw-input");
+      inputs.forEach((inp) => {
+        inp.value = "";
+        inp.classList.remove("cw-wrong", "cw-correct");
+      });
+      const message = document.getElementById("cw-message");
+      message.textContent = "";
+      message.className = "cw-message";
+    }
 
-    // Start
-    createEmptyGrid();
-    placeWords();
+    /************************************************************
+     * INITIALISIERUNG
+     ************************************************************/
+
+    placeAllWords();
+    renderGrid();
+
+    document
+      .getElementById("btn-across")
+      .addEventListener("click", () => setDirection("across"));
+    document
+      .getElementById("btn-down")
+      .addEventListener("click", () => setDirection("down"));
+
+    document
+      .getElementById("btn-check")
+      .addEventListener("click", checkSolution);
+    document
+      .getElementById("btn-clear")
+      .addEventListener("click", clearAll);
+
+    document
+      .getElementById("cw-grid")
+      .addEventListener("click", handleCellClick);
+    document.addEventListener("keydown", handleInputKey);
   </script>
 </body>
 </html>
-
