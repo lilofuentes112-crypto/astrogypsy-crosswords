@@ -13,9 +13,7 @@
       --error: #ff6666;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -99,8 +97,8 @@
       position: absolute;
       inset: 0;
       display: grid;
-      grid-template-columns: repeat(17, 1fr);
-      grid-template-rows: repeat(17, 1fr);
+      grid-template-columns: repeat(15, 1fr);
+      grid-template-rows: repeat(15, 1fr);
       z-index: 1;
     }
 
@@ -182,13 +180,8 @@
       margin-bottom: 10px;
     }
 
-    .cw-message.ok {
-      color: #79d27b;
-    }
-
-    .cw-message.err {
-      color: var(--error);
-    }
+    .cw-message.ok { color: #79d27b; }
+    .cw-message.err { color: var(--error); }
 
     .cw-clues {
       font-size: 13px;
@@ -201,26 +194,21 @@
       color: var(--copper-light);
     }
 
-    .cw-clues ol {
+    .cw-clues ul {
       margin: 2px 0 6px 16px;
       padding: 0;
+      list-style: none;
     }
 
-    .cw-clues li {
-      margin-bottom: 2px;
-    }
+    .cw-clues li { margin-bottom: 2px; }
 
     @media (max-width: 600px) {
       .cw-wrapper {
         margin: 12px 4px;
         padding: 10px;
       }
-      h1 {
-        font-size: 18px;
-      }
-      .cw-board {
-        max-width: 100%;
-      }
+      h1 { font-size: 18px; }
+      .cw-board { max-width: 100%; }
     }
   </style>
 </head>
@@ -249,37 +237,51 @@
 
     <div class="cw-clues">
       <h2>Waagrecht</h2>
-      <ol id="cw-across"></ol>
+      <ul id="cw-across"></ul>
 
       <h2>Senkrecht</h2>
-      <ol id="cw-down"></ol>
+      <ul id="cw-down"></ul>
     </div>
   </div>
 
   <script>
-    const GRID_SIZE = 17;
+    const GRID_SIZE = 15;
 
-    const WORDS_INPUT = [
+    // Feste Definition für Level 1:
+    // Koordinaten: row/col 0–14
+    const WORDS = [
       {
+        number: 1,
         answer: "ASTROLOGIE",
         clue: "Lehre von den Zusammenhängen zwischen Gestirnen und irdischen Ereignissen.",
         direction: "across",
+        row: 7,
+        col: 3
       },
       {
-        answer: "CHIRON",
-        clue: "Planetoid, der oft mit Wunde und Heilung verbunden wird.",
-        direction: "down",
-      },
-      {
-        answer: "ASPEKT",
-        clue: "Winkelbeziehung zwischen zwei Planeten.",
-        direction: "across",
-      },
-      {
+        number: 1,
         answer: "STERNBILD",
         clue: "Worin stehen die Sternbilder in der Nacht?",
         direction: "down",
+        row: 0,
+        col: 8
       },
+      {
+        number: 2,
+        answer: "CHIRON",
+        clue: "Planetoid, der oft mit Wunde und Heilung verbunden wird.",
+        direction: "down",
+        row: 4,
+        col: 6
+      },
+      {
+        number: 3,
+        answer: "ASPEKT",
+        clue: "Winkelbeziehung zwischen zwei Planeten.",
+        direction: "down",
+        row: 2,
+        col: 5
+      }
     ];
 
     const gridEl = document.getElementById("cw-grid");
@@ -291,7 +293,6 @@
     const toggleButtons = document.querySelectorAll(".cw-toggle");
 
     let selectedDirection = "across";
-    let placedWords = [];
     let cells = []; // [row][col] -> { row,col,cellEl,inputEl,solutionChar,numberEl }
 
     function createEmptyGridData(size) {
@@ -299,111 +300,35 @@
       for (let r = 0; r < size; r++) {
         const row = [];
         for (let c = 0; c < size; c++) {
-          row.push({ char: null, words: [] });
+          row.push({ char: null, number: null });
         }
         grid.push(row);
       }
       return grid;
     }
 
-    function placeWordOnGrid(wordDef, row, col, direction, gridData) {
-      const answer = wordDef.answer.toUpperCase();
-      const positions = [];
-
-      for (let i = 0; i < answer.length; i++) {
-        const r = direction === "across" ? row : row + i;
-        const c = direction === "across" ? col + i : col;
-
-        gridData[r][c].char = answer[i];
-        gridData[r][c].words.push(wordDef);
-        positions.push({ row: r, col: c });
-      }
-
-      placedWords.push({
-        ...wordDef,
-        direction,
-        row,
-        col,
-        positions,
-        number: null,
-      });
-    }
-
-    function canPlace(answer, startRow, startCol, direction, gridData) {
-      if (direction === "across") {
-        if (startCol < 0 || startCol + answer.length > GRID_SIZE) return false;
-        if (startRow < 0 || startRow >= GRID_SIZE) return false;
-      } else {
-        if (startRow < 0 || startRow + answer.length > GRID_SIZE) return false;
-        if (startCol < 0 || startCol >= GRID_SIZE) return false;
-      }
-
-      for (let i = 0; i < answer.length; i++) {
-        const r = direction === "across" ? startRow : startRow + i;
-        const c = direction === "across" ? startCol + i : startCol;
-        const existing = gridData[r][c].char;
-        if (existing && existing !== answer[i]) return false;
-      }
-      return true;
-    }
-
-    function placeWordWithOverlap(wordDef, gridData) {
-      const answer = wordDef.answer.toUpperCase();
-      const candidates = [];
-
-      for (const placed of placedWords) {
-        const placedAnswer = placed.answer.toUpperCase();
-
+    function fillWords(gridData) {
+      for (const w of WORDS) {
+        const answer = w.answer.toUpperCase();
         for (let i = 0; i < answer.length; i++) {
-          const ch = answer[i];
-          for (let j = 0; j < placedAnswer.length; j++) {
-            if (placedAnswer[j] !== ch) continue;
+          const r = w.direction === "across" ? w.row : w.row + i;
+          const c = w.direction === "across" ? w.col + i : w.col;
 
-            if (placed.direction === "across") {
-              const row = placed.row;
-              const col = placed.col + j;
-              const startRow = row - i;
-              if (canPlace(answer, startRow, col, "down", gridData)) {
-                candidates.push({ row: startRow, col, direction: "down" });
-              }
-            } else {
-              const row = placed.row + j;
-              const col = placed.col;
-              const startCol = col - i;
-              if (canPlace(answer, row, startCol, "across", gridData)) {
-                candidates.push({ row, col: startCol, direction: "across" });
-              }
-            }
+          const cell = gridData[r][c];
+          if (cell.char && cell.char !== answer[i]) {
+            console.warn("Buchstabenkonflikt bei", r, c);
+          } else {
+            cell.char = answer[i];
           }
         }
-      }
 
-      if (candidates.length === 0) {
-        return false;
-      }
-
-      const best = candidates[0];
-      placeWordOnGrid(wordDef, best.row, best.col, best.direction, gridData);
-      return true;
-    }
-
-    function layoutWords(words) {
-      const gridData = createEmptyGridData(GRID_SIZE);
-      const sorted = [...words].sort((a, b) => b.answer.length - a.answer.length);
-      const first = sorted[0];
-      const middleRow = Math.floor(GRID_SIZE / 2);
-      const startCol = Math.floor((GRID_SIZE - first.answer.length) / 2);
-
-      placeWordOnGrid(first, middleRow, startCol, "across", gridData);
-
-      for (let i = 1; i < sorted.length; i++) {
-        const w = sorted[i];
-        if (!placeWordWithOverlap(w, gridData)) {
-          console.warn("Konnte Wort nicht platzieren:", w.answer);
+        // Nummer nur auf Startfeld schreiben
+        const sr = w.row;
+        const sc = w.col;
+        if (gridData[sr][sc].number === null) {
+          gridData[sr][sc].number = w.number;
         }
       }
-
-      return gridData;
     }
 
     function renderGrid(gridData) {
@@ -423,7 +348,7 @@
             cellEl,
             inputEl: null,
             solutionChar: data.char || null,
-            numberEl: null,
+            numberEl: null
           };
 
           if (!data.char) {
@@ -437,17 +362,16 @@
             cellEl.appendChild(input);
             cellObj.inputEl = input;
 
-            input.addEventListener("focus", () => {
-              // beim Fokussieren nichts Kompliziertes – Position wird im Event benutzt
-            });
+            input.addEventListener("keydown", (e) => handleKeyDown(e, cellObj));
+            input.addEventListener("input", (e) => handleInput(e, cellObj));
+          }
 
-            input.addEventListener("keydown", (e) => {
-              handleKeyDown(e, cellObj);
-            });
-
-            input.addEventListener("input", (e) => {
-              handleInput(e, cellObj);
-            });
+          if (data.number !== null) {
+            const numEl = document.createElement("div");
+            numEl.className = "cw-number";
+            numEl.textContent = data.number;
+            cellEl.appendChild(numEl);
+            cellObj.numberEl = numEl;
           }
 
           gridEl.appendChild(cellEl);
@@ -457,68 +381,34 @@
       }
     }
 
-    function assignNumbers() {
-      let number = 1;
-      for (const word of placedWords) {
-        const firstPos = word.positions[0];
-        const r = firstPos.row;
-        const c = firstPos.col;
-
-        let startsWord = false;
-        if (word.direction === "across") {
-          if (c === 0 || !cells[r][c - 1].solutionChar) startsWord = true;
-        } else {
-          if (r === 0 || !cells[r - 1][c].solutionChar) startsWord = true;
-        }
-
-        if (startsWord) {
-          word.number = number++;
-        }
-      }
-    }
-
-    function placeNumbersOnGrid() {
-      for (const word of placedWords) {
-        if (!word.number) continue;
-        const firstPos = word.positions[0];
-        const cell = cells[firstPos.row][firstPos.col];
-        const numEl = document.createElement("div");
-        numEl.className = "cw-number";
-        numEl.textContent = word.number;
-        cell.cellEl.appendChild(numEl);
-        cell.numberEl = numEl;
-      }
-    }
-
     function renderClues() {
       acrossListEl.innerHTML = "";
       downListEl.innerHTML = "";
 
-      const acrossWords = placedWords
-        .filter((w) => w.direction === "across" && w.number !== null)
+      const across = WORDS
+        .filter((w) => w.direction === "across")
+        .sort((a, b) => a.number - b.number);
+      const down = WORDS
+        .filter((w) => w.direction === "down")
         .sort((a, b) => a.number - b.number);
 
-      const downWords = placedWords
-        .filter((w) => w.direction === "down" && w.number !== null)
-        .sort((a, b) => a.number - b.number);
-
-      for (const w of acrossWords) {
+      for (const w of across) {
         const li = document.createElement("li");
-        // Nummer kommt automatisch vom <ol>, hier nur der Text:
-        li.textContent = w.clue;
+        li.textContent = `${w.number}. ${w.clue}`;
         acrossListEl.appendChild(li);
       }
 
-      for (const w of downWords) {
+      for (const w of down) {
         const li = document.createElement("li");
-        li.textContent = w.clue;
+        li.textContent = `${w.number}. ${w.clue}`;
         downListEl.appendChild(li);
       }
     }
 
     function moveFocusFrom(cellObj, dir) {
-      const dRow = dir === "down" ? 1 : 0;
-      const dCol = dir === "across" ? 1 : 0;
+      let dRow = 0, dCol = 0;
+      if (dir === "across") dCol = 1;
+      if (dir === "down") dRow = 1;
 
       let r = cellObj.row;
       let c = cellObj.col;
@@ -536,8 +426,7 @@
       }
     }
 
-    function moveFocusFromWithStep(cellObj, stepDir) {
-      // stepDir: "left","right","up","down"
+    function moveFocusStep(cellObj, stepDir) {
       let dRow = 0, dCol = 0;
       if (stepDir === "left") dCol = -1;
       if (stepDir === "right") dCol = 1;
@@ -565,33 +454,33 @@
         case "ArrowLeft":
           selectedDirection = "across";
           updateDirectionButtons();
-          moveFocusFromWithStep(cellObj, "left");
+          moveFocusStep(cellObj, "left");
           e.preventDefault();
           break;
         case "ArrowRight":
           selectedDirection = "across";
           updateDirectionButtons();
-          moveFocusFromWithStep(cellObj, "right");
+          moveFocusStep(cellObj, "right");
           e.preventDefault();
           break;
         case "ArrowUp":
           selectedDirection = "down";
           updateDirectionButtons();
-          moveFocusFromWithStep(cellObj, "up");
+          moveFocusStep(cellObj, "up");
           e.preventDefault();
           break;
         case "ArrowDown":
           selectedDirection = "down";
           updateDirectionButtons();
-          moveFocusFromWithStep(cellObj, "down");
+          moveFocusStep(cellObj, "down");
           e.preventDefault();
           break;
         case "Backspace":
           if (cellObj.inputEl.value === "") {
             if (selectedDirection === "across") {
-              moveFocusFromWithStep(cellObj, "left");
+              moveFocusStep(cellObj, "left");
             } else {
-              moveFocusFromWithStep(cellObj, "up");
+              moveFocusStep(cellObj, "up");
             }
           }
           break;
@@ -679,11 +568,9 @@
     clearBtn.addEventListener("click", clearAll);
 
     (function init() {
-      placedWords = [];
-      const gridData = layoutWords(WORDS_INPUT);
+      const gridData = createEmptyGridData(GRID_SIZE);
+      fillWords(gridData);
       renderGrid(gridData);
-      assignNumbers();
-      placeNumbersOnGrid();
       renderClues();
     })();
   </script>
