@@ -9,7 +9,6 @@
       --bg-dark: #000000;
       --copper: #bf8c60;
       --copper-light: #f0c8a0;
-      --grid-line: #bf8c60;
       --text-main: #f5e7d8;
       --error: #ff6666;
     }
@@ -80,7 +79,7 @@
       position: relative;
       width: 100%;
       max-width: 480px;
-      aspect-ratio: 1 / 1; /* Quadrat */
+      aspect-ratio: 1 / 1;
       border: 2px solid var(--copper);
       overflow: hidden;
     }
@@ -258,9 +257,6 @@
   </div>
 
   <script>
-    // ------------------------------------------------------------
-    // KONFIGURATION: HIER NUR WÖRTER + TEXTE ANPASSEN
-    // ------------------------------------------------------------
     const GRID_SIZE = 17;
 
     const WORDS_INPUT = [
@@ -286,9 +282,6 @@
       },
     ];
 
-    // ------------------------------------------------------------
-    // INTERNER ZUSTAND
-    // ------------------------------------------------------------
     const gridEl = document.getElementById("cw-grid");
     const acrossListEl = document.getElementById("cw-across");
     const downListEl = document.getElementById("cw-down");
@@ -297,55 +290,20 @@
     const clearBtn = document.getElementById("clear-btn");
     const toggleButtons = document.querySelectorAll(".cw-toggle");
 
-    let selectedDirection = "across"; // durch die Toggle-Buttons gesteuert
+    let selectedDirection = "across";
     let placedWords = [];
-    let cells = []; // 2D: [row][col] = { cellEl, inputEl, solutions: [], numberEl? }
-
-    let activeWord = null;
-    let activeIndexInWord = 0;
-
-    // ------------------------------------------------------------
-    // HILFSFUNKTIONEN
-    // ------------------------------------------------------------
+    let cells = []; // [row][col] -> { row,col,cellEl,inputEl,solutionChar,numberEl }
 
     function createEmptyGridData(size) {
       const grid = [];
       for (let r = 0; r < size; r++) {
         const row = [];
         for (let c = 0; c < size; c++) {
-          row.push({
-            char: null, // korrekte Buchstaben (falls Teil eines Wortes)
-            words: [],  // welche Wörter laufen hier durch
-          });
+          row.push({ char: null, words: [] });
         }
         grid.push(row);
       }
       return grid;
-    }
-
-    // versucht, alle Wörter sinnvoll zu platzieren
-    function layoutWords(words) {
-      const gridData = createEmptyGridData(GRID_SIZE);
-
-      // längstes Wort zuerst, waagrecht
-      const sorted = [...words].sort((a, b) => b.answer.length - a.answer.length);
-      const first = sorted[0];
-      const middleRow = Math.floor(GRID_SIZE / 2);
-      const startCol = Math.floor((GRID_SIZE - first.answer.length) / 2);
-
-      placeWordOnGrid(first, middleRow, startCol, "across", gridData);
-
-      // Rest einbauen
-      for (let i = 1; i < sorted.length; i++) {
-        const w = sorted[i];
-        if (!placeWordWithOverlap(w, gridData)) {
-          // Falls GAR kein Platz gefunden wird, wird es übersprungen.
-          // Für deine Wortlisten sollte das aber nicht vorkommen.
-          console.warn("Konnte Wort nicht platzieren:", w.answer);
-        }
-      }
-
-      return gridData;
     }
 
     function placeWordOnGrid(wordDef, row, col, direction, gridData) {
@@ -367,11 +325,28 @@
         row,
         col,
         positions,
-        number: null, // später vergeben
+        number: null,
       });
     }
 
-    // sucht eine Position für wordDef mit mindestens einem gemeinsamen Buchstaben
+    function canPlace(answer, startRow, startCol, direction, gridData) {
+      if (direction === "across") {
+        if (startCol < 0 || startCol + answer.length > GRID_SIZE) return false;
+        if (startRow < 0 || startRow >= GRID_SIZE) return false;
+      } else {
+        if (startRow < 0 || startRow + answer.length > GRID_SIZE) return false;
+        if (startCol < 0 || startCol >= GRID_SIZE) return false;
+      }
+
+      for (let i = 0; i < answer.length; i++) {
+        const r = direction === "across" ? startRow : startRow + i;
+        const c = direction === "across" ? startCol + i : startCol;
+        const existing = gridData[r][c].char;
+        if (existing && existing !== answer[i]) return false;
+      }
+      return true;
+    }
+
     function placeWordWithOverlap(wordDef, gridData) {
       const answer = wordDef.answer.toUpperCase();
       const candidates = [];
@@ -381,11 +356,9 @@
 
         for (let i = 0; i < answer.length; i++) {
           const ch = answer[i];
-
           for (let j = 0; j < placedAnswer.length; j++) {
             if (placedAnswer[j] !== ch) continue;
 
-            // Wenn placed across ist, setzen wir neues Wort down und umgekehrt
             if (placed.direction === "across") {
               const row = placed.row;
               const col = placed.col + j;
@@ -409,57 +382,28 @@
         return false;
       }
 
-      // Einfach ersten Kandidaten nehmen
       const best = candidates[0];
       placeWordOnGrid(wordDef, best.row, best.col, best.direction, gridData);
       return true;
     }
 
-    function canPlace(answer, startRow, startCol, direction, gridData) {
-      if (direction === "across") {
-        if (startCol < 0 || startCol + answer.length > GRID_SIZE) return false;
-        if (startRow < 0 || startRow >= GRID_SIZE) return false;
-      } else {
-        if (startRow < 0 || startRow + answer.length > GRID_SIZE) return false;
-        if (startCol < 0 || startCol >= GRID_SIZE) return false;
-      }
+    function layoutWords(words) {
+      const gridData = createEmptyGridData(GRID_SIZE);
+      const sorted = [...words].sort((a, b) => b.answer.length - a.answer.length);
+      const first = sorted[0];
+      const middleRow = Math.floor(GRID_SIZE / 2);
+      const startCol = Math.floor((GRID_SIZE - first.answer.length) / 2);
 
-      for (let i = 0; i < answer.length; i++) {
-        const r = direction === "across" ? startRow : startRow + i;
-        const c = direction === "across" ? startCol + i : startCol;
+      placeWordOnGrid(first, middleRow, startCol, "across", gridData);
 
-        const existing = gridData[r][c].char;
-        if (existing && existing !== answer[i]) {
-          return false;
+      for (let i = 1; i < sorted.length; i++) {
+        const w = sorted[i];
+        if (!placeWordWithOverlap(w, gridData)) {
+          console.warn("Konnte Wort nicht platzieren:", w.answer);
         }
       }
 
-      return true;
-    }
-
-    // Nummern vergeben (klassische Kreuzwortlogik)
-    function assignNumbers() {
-      let number = 1;
-      for (const word of placedWords) {
-        const firstPos = word.positions[0];
-        const r = firstPos.row;
-        const c = firstPos.col;
-
-        let startsWord = false;
-        if (word.direction === "across") {
-          if (c === 0 || !cells[r][c - 1].solutionChar) {
-            startsWord = true;
-          }
-        } else {
-          if (r === 0 || !cells[r - 1][c].solutionChar) {
-            startsWord = true;
-          }
-        }
-
-        if (startsWord) {
-          word.number = number++;
-        }
-      }
+      return gridData;
     }
 
     function renderGrid(gridData) {
@@ -469,8 +413,7 @@
       for (let r = 0; r < GRID_SIZE; r++) {
         const rowCells = [];
         for (let c = 0; c < GRID_SIZE; c++) {
-          const cellData = gridData[r][c];
-
+          const data = gridData[r][c];
           const cellEl = document.createElement("div");
           cellEl.className = "cw-cell";
 
@@ -479,11 +422,11 @@
             col: c,
             cellEl,
             inputEl: null,
-            solutionChar: cellData.char || null,
+            solutionChar: data.char || null,
             numberEl: null,
           };
 
-          if (!cellData.char) {
+          if (!data.char) {
             cellEl.classList.add("empty");
           } else {
             const input = document.createElement("input");
@@ -495,11 +438,7 @@
             cellObj.inputEl = input;
 
             input.addEventListener("focus", () => {
-              setActiveByCell(r, c);
-            });
-
-            input.addEventListener("click", () => {
-              setActiveByCell(r, c);
+              // beim Fokussieren nichts Kompliziertes – Position wird im Event benutzt
             });
 
             input.addEventListener("keydown", (e) => {
@@ -518,12 +457,31 @@
       }
     }
 
+    function assignNumbers() {
+      let number = 1;
+      for (const word of placedWords) {
+        const firstPos = word.positions[0];
+        const r = firstPos.row;
+        const c = firstPos.col;
+
+        let startsWord = false;
+        if (word.direction === "across") {
+          if (c === 0 || !cells[r][c - 1].solutionChar) startsWord = true;
+        } else {
+          if (r === 0 || !cells[r - 1][c].solutionChar) startsWord = true;
+        }
+
+        if (startsWord) {
+          word.number = number++;
+        }
+      }
+    }
+
     function placeNumbersOnGrid() {
       for (const word of placedWords) {
         if (!word.number) continue;
         const firstPos = word.positions[0];
         const cell = cells[firstPos.row][firstPos.col];
-
         const numEl = document.createElement("div");
         numEl.className = "cw-number";
         numEl.textContent = word.number;
@@ -546,97 +504,95 @@
 
       for (const w of acrossWords) {
         const li = document.createElement("li");
-        li.textContent = `${w.number}. ${w.clue}`;
+        // Nummer kommt automatisch vom <ol>, hier nur der Text:
+        li.textContent = w.clue;
         acrossListEl.appendChild(li);
       }
 
       for (const w of downWords) {
         const li = document.createElement("li");
-        li.textContent = `${w.number}. ${w.clue}`;
+        li.textContent = w.clue;
         downListEl.appendChild(li);
       }
     }
 
-    // ------------------------------------------------------------
-    // AKTIVES WORT / TASTENSTEUERUNG
-    // ------------------------------------------------------------
+    function moveFocusFrom(cellObj, dir) {
+      const dRow = dir === "down" ? 1 : 0;
+      const dCol = dir === "across" ? 1 : 0;
 
-    function setActiveByCell(row, col) {
-      const possible = placedWords.filter((w) =>
-        w.positions.some((p) => p.row === row && p.col === col)
-      );
+      let r = cellObj.row;
+      let c = cellObj.col;
 
-      if (possible.length === 0) {
-        activeWord = null;
-        return;
+      while (true) {
+        r += dRow;
+        c += dCol;
+        if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) return;
+        const next = cells[r][c];
+        if (next && next.inputEl) {
+          next.inputEl.focus();
+          next.inputEl.select();
+          return;
+        }
       }
-
-      // Bevorzugt: Wort in der aktuell gewählten Richtung
-      let chosen = possible.find((w) => w.direction === selectedDirection);
-      if (!chosen) {
-        chosen = possible[0];
-        selectedDirection = chosen.direction;
-        updateDirectionButtons();
-      }
-
-      activeWord = chosen;
-
-      // Index innerhalb des Wortes finden
-      activeIndexInWord = activeWord.positions.findIndex(
-        (p) => p.row === row && p.col === col
-      );
     }
 
-    function moveCursor(step) {
-      if (!activeWord) return;
+    function moveFocusFromWithStep(cellObj, stepDir) {
+      // stepDir: "left","right","up","down"
+      let dRow = 0, dCol = 0;
+      if (stepDir === "left") dCol = -1;
+      if (stepDir === "right") dCol = 1;
+      if (stepDir === "up") dRow = -1;
+      if (stepDir === "down") dRow = 1;
 
-      let newIndex = activeIndexInWord + step;
-      if (newIndex < 0) newIndex = 0;
-      if (newIndex >= activeWord.positions.length)
-        newIndex = activeWord.positions.length - 1;
+      let r = cellObj.row;
+      let c = cellObj.col;
 
-      activeIndexInWord = newIndex;
-      const pos = activeWord.positions[activeIndexInWord];
-      const cellObj = cells[pos.row][pos.col];
-      if (cellObj.inputEl) {
-        cellObj.inputEl.focus();
-        cellObj.inputEl.select();
+      while (true) {
+        r += dRow;
+        c += dCol;
+        if (r < 0 || r >= GRID_SIZE || c < 0 || c >= GRID_SIZE) return;
+        const next = cells[r][c];
+        if (next && next.inputEl) {
+          next.inputEl.focus();
+          next.inputEl.select();
+          return;
+        }
       }
     }
 
     function handleKeyDown(e, cellObj) {
-      if (!activeWord) {
-        setActiveByCell(cellObj.row, cellObj.col);
-      }
-
       switch (e.key) {
         case "ArrowLeft":
           selectedDirection = "across";
           updateDirectionButtons();
-          moveCursor(-1);
+          moveFocusFromWithStep(cellObj, "left");
           e.preventDefault();
           break;
         case "ArrowRight":
           selectedDirection = "across";
           updateDirectionButtons();
-          moveCursor(1);
+          moveFocusFromWithStep(cellObj, "right");
           e.preventDefault();
           break;
         case "ArrowUp":
           selectedDirection = "down";
           updateDirectionButtons();
-          moveCursor(-1);
+          moveFocusFromWithStep(cellObj, "up");
           e.preventDefault();
           break;
         case "ArrowDown":
           selectedDirection = "down";
           updateDirectionButtons();
-          moveCursor(1);
+          moveFocusFromWithStep(cellObj, "down");
           e.preventDefault();
           break;
         case "Backspace":
           if (cellObj.inputEl.value === "") {
-            moveCursor(-1);
+            if (selectedDirection === "across") {
+              moveFocusFromWithStep(cellObj, "left");
+            } else {
+              moveFocusFromWithStep(cellObj, "up");
+            }
           }
           break;
       }
@@ -645,19 +601,10 @@
     function handleInput(e, cellObj) {
       const val = e.target.value.toUpperCase().replace(/[^A-ZÄÖÜß]/g, "");
       e.target.value = val;
-
-      if (!activeWord) {
-        setActiveByCell(cellObj.row, cellObj.col);
-      }
-
-      if (val && activeWord) {
-        moveCursor(1);
+      if (val) {
+        moveFocusFrom(cellObj, selectedDirection);
       }
     }
-
-    // ------------------------------------------------------------
-    // AUSWERTUNG / BUTTONS
-    // ------------------------------------------------------------
 
     function clearAll() {
       for (const row of cells) {
@@ -711,10 +658,6 @@
       }
     }
 
-    // ------------------------------------------------------------
-    // RICHTUNG BUTTONS
-    // ------------------------------------------------------------
-
     function updateDirectionButtons() {
       toggleButtons.forEach((btn) => {
         if (btn.dataset.dir === selectedDirection) {
@@ -729,20 +672,12 @@
       btn.addEventListener("click", () => {
         selectedDirection = btn.dataset.dir;
         updateDirectionButtons();
-        if (activeWord && activeWord.direction !== selectedDirection) {
-          // Richtung gewechselt → aktives Wort auf eins in dieser Richtung an derselben Zelle umlegen
-          const pos = activeWord.positions[activeIndexInWord];
-          setActiveByCell(pos.row, pos.col);
-        }
       });
     });
 
     checkBtn.addEventListener("click", checkSolution);
     clearBtn.addEventListener("click", clearAll);
 
-    // ------------------------------------------------------------
-    // INITIALISIERUNG
-    // ------------------------------------------------------------
     (function init() {
       placedWords = [];
       const gridData = layoutWords(WORDS_INPUT);
@@ -754,3 +689,4 @@
   </script>
 </body>
 </html>
+
