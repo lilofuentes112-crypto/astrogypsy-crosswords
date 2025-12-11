@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Astro-Kreuzworträtsel X</title>
+  <title>Astro-Kreuzworträtsel </title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -215,7 +215,7 @@
 </head>
 <body>
   <div class="page">
-    <h1>Steinbock-RätselX</h1>
+    <h1>Steinbock-Rätsel</h1>
 
     <div class="board-frame">
       <div class="controls" id="directionControls">
@@ -247,7 +247,7 @@
      * 1. WORDS_INPUT – hier fügst du den Block aus dem Generator ein
      ************************************************************/
 
-const WORDS_INPUT = [
+    const WORDS_INPUT = [
   {
     "answer": "WASSERMANN",
     "clue": "1. Welches Sternzeichen folgt dem Steinbock?",
@@ -753,7 +753,7 @@ const WORDS_INPUT = [
                 `<li><strong>${it.number}.</strong> ${it.text}</li>`
             )
             .join("") +
-          "</ol>`
+          "</ol>"
         );
       };
 
