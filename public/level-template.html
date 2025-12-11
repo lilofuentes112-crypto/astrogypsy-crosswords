@@ -89,7 +89,7 @@
       position: relative;
       width: 100%;
       max-width: 580px;
-      margin: 0 auto;
+      margin: 0 auto 16px;           /* zusätzlicher Abstand nach unten */
       aspect-ratio: 1 / 1;
       border: 1px solid var(--astro-border);
       overflow: hidden;
@@ -107,32 +107,36 @@
     }
 
     .cell {
+      width: 32px;
+      height: 32px;
+      background-color: #000000;        /* tiefschwarz */
+      border: 1px solid var(--astro-border);
       position: relative;
-      border: 1px solid transparent;
+      box-sizing: border-box;
     }
 
     .cell.active {
       border-color: rgba(245, 178, 107, 0.35);
-      background: transparent;
+      /* kein Hintergrundwechsel mehr */
     }
 
-    .cell-input {
-      position: absolute;
-      inset: 0;
+    .cell input {
       width: 100%;
       height: 100%;
       border: none;
-      background: var(--astro-cell-bg);
-      color: var(--astro-text);
+      background: transparent;
+      color: #f5e3c3;
+      font-size: 18px;
+      font-weight: 600;
       text-align: center;
-      font-size: clamp(12px, 2.6vw, 20px);
-      text-transform: uppercase;
-      outline: none;
-      padding-top: 14px;
+      line-height: 32px;               /* = Zellenhöhe → nichts abgeschnitten */
+      padding: 0;
+      box-sizing: border-box;
     }
 
-    .cell-input:focus {
-      outline: 1px solid var(--astro-border);
+    .cell input:focus {
+      outline: none;
+      background: transparent;         /* kein Farbwechsel beim Klick */
     }
 
     .cell-number {
@@ -142,18 +146,19 @@
       font-size: 9px;
       color: var(--astro-border);
       pointer-events: none;
+      text-shadow: 0 0 3px #000;
     }
 
     .cell.selected .cell-input {
-      background: var(--astro-cell-selected);
+      background: transparent;         /* Selektionsfarbe entfernt */
     }
 
     .cell.error .cell-input {
-      background: var(--astro-cell-error);
+      background: var(--astro-cell-error);  /* Fehler rot hinterlegt */
     }
 
     .cell.correct .cell-input {
-      background: var(--astro-cell-bg);
+      background: var(--astro-cell-bg);     /* korrekt leicht hervorgehoben */
     }
 
     .status {
@@ -243,33 +248,18 @@
      ************************************************************/
 
     const WORDS_INPUT = [
-      /* Beispiel – diesen Block später durch Generator-Ergebnis ersetzen
-      {
-        "answer": "ASTROLOGIE",
-        "clue": "1. Lehre von den Zusammenhängen zwischen Gestirnen und irdischen Ereignissen.",
-        "start": "B7",
-        "direction": "across"
-      },
-      {
-        "answer": "CHIRON",
-        "clue": "2. Planetoid, der oft mit Wunde und Heilung verbunden wird.",
-        "start": "E3",
-        "direction": "down"
-      },
-      {
-        "answer": "ASPEKT",
-        "clue": "3. Winkelbeziehung zwischen zwei Planeten.",
-        "start": "H4",
-        "direction": "down"
-      },
-      {
-        "answer": "STERNBILD",
-        "clue": "4. Worin stehen die Sternbilder in der Nacht?",
-        "start": "B7",
-        "direction": "down"
-      }
-      */
+      /* Hier den vom Generator erzeugten Block einfügen */
     ];
+
+    /************************************************************
+     * 1a. Erfolgs-Text / Passwort-Hinweis pro Rätsel festlegen
+     ************************************************************/
+
+    const SUCCESS_MESSAGE =
+      "Gratuliere, du hast dieses Rätsel erfolgreich abgeschlossen.";
+    // Optionaler Zusatz (z.B. Passwort für das nächste Level). Leer lassen, wenn nicht benötigt.
+    const SUCCESS_PASSWORD_HINT =
+      ""; // Beispiel: "Das Passwort für Level 2 lautet: WALDFEE.";
 
     /************************************************************
      * 2. Hilfsfunktionen
@@ -647,14 +637,17 @@
 
       const statusEl = document.getElementById("status");
       if (allCorrect && allFilled) {
-        statusEl.innerHTML =
-          '<span class="status-ok">Alle Lösungen sind korrekt – sehr gut!</span>';
+        let msg = SUCCESS_MESSAGE;
+        if (SUCCESS_PASSWORD_HINT.trim()) {
+          msg += " " + SUCCESS_PASSWORD_HINT.trim();
+        }
+        statusEl.innerHTML = '<span class="status-ok">' + msg + "</span>";
       } else if (!allFilled) {
         statusEl.innerHTML =
           '<span class="status-error">Es sind noch nicht alle Felder ausgefüllt.</span>';
       } else {
         statusEl.innerHTML =
-          '<span class="status-error">Es sind noch Fehler vorhanden.</span>';
+          '<span class="status-error">Es sind noch Fehler im Rätsel. Bitte kontrolliere deine Antworten.</span>';
       }
     }
 
