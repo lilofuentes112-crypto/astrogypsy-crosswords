@@ -89,7 +89,8 @@
       width: 100%;
       max-width: 580px;
       margin: 0 auto 24px;
-      aspect-ratio: 1 / 1;
+      height: auto;
+padding-bottom: 4%;
       border: 1px solid var(--astro-border);
       overflow: hidden;
       background-size: cover;
@@ -103,6 +104,7 @@
       display: grid;
       grid-template-columns: repeat(var(--cols), 1fr);
       grid-template-rows: repeat(var(--rows), 1fr);
+height: 100%;  
     }
 
     /* Leere Zellen: komplett unsichtbar, keine Linien */
@@ -244,7 +246,7 @@
      * 1. WORDS_INPUT – hier fügst du den Block aus dem Generator ein
      ************************************************************/
 
-const WORDS_INPUT = [
+    const WORDS_INPUT = [
   {
     "answer": "WASSERMANN",
     "clue": "1. Welches Sternzeichen folgt dem Steinbock?",
