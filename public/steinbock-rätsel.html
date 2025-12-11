@@ -85,26 +85,22 @@
     }
 
     .grid-wrapper {
-      position: relative;
-      width: 100%;
-      max-width: 580px;
-      margin: 0 auto 24px;
-      height: auto;
-padding-bottom: 4%;
-      border: 1px solid var(--astro-border);
-      overflow: hidden;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto 24px;
+  border: 1px solid var(--astro-border);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
     .grid {
       position: absolute;
       inset: 0;
       display: grid;
       grid-template-columns: repeat(var(--cols), 1fr);
       grid-template-rows: repeat(var(--rows), 1fr);
-height: 100%;  
     }
 
     /* Leere Zellen: komplett unsichtbar, keine Linien */
@@ -246,7 +242,7 @@ height: 100%;
      * 1. WORDS_INPUT – hier fügst du den Block aus dem Generator ein
      ************************************************************/
 
-    const WORDS_INPUT = [
+const WORDS_INPUT = [
   {
     "answer": "WASSERMANN",
     "clue": "1. Welches Sternzeichen folgt dem Steinbock?",
@@ -393,7 +389,14 @@ height: 100%;
 
     const ROWS = maxRow;
     const COLS = maxCol;
+// Höhe des Bild-/Rasterbereichs dynamisch anpassen
+const CELL_SIZE = 32;
+const EXTRA_BOTTOM = 12;
 
+const gridWrapperEl = document.getElementById("gridWrapper");
+if (gridWrapperEl) {
+  gridWrapperEl.style.height = (ROWS * CELL_SIZE + EXTRA_BOTTOM) + "px";
+}
     const cellMap = new Map();
 
     function getCell(r, c) {
