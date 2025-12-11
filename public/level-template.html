@@ -129,14 +129,14 @@
       font-size: 18px;
       font-weight: 600;
       text-align: center;
-      line-height: 32px;               /* = Zellenhöhe → nichts abgeschnitten */
+      line-height: 32px;               /* = Zellenhöhe */
       padding: 0;
       box-sizing: border-box;
     }
 
     .cell input:focus {
       outline: none;
-      background: transparent;         /* kein Farbwechsel beim Klick */
+      background: transparent;
     }
 
     .cell-number {
@@ -150,15 +150,15 @@
     }
 
     .cell.selected .cell-input {
-      background: transparent;         /* Selektionsfarbe entfernt */
+      background: transparent;
     }
 
     .cell.error .cell-input {
-      background: var(--astro-cell-error);  /* Fehler rot hinterlegt */
+      background: var(--astro-cell-error);
     }
 
     .cell.correct .cell-input {
-      background: var(--astro-cell-bg);     /* korrekt leicht hervorgehoben */
+      background: var(--astro-cell-bg);
     }
 
     .status {
@@ -257,28 +257,24 @@
 
     const SUCCESS_MESSAGE =
       "Gratuliere, du hast dieses Rätsel erfolgreich abgeschlossen.";
-    // Optionaler Zusatz (z.B. Passwort für das nächste Level). Leer lassen, wenn nicht benötigt.
-    const SUCCESS_PASSWORD_HINT =
-      ""; // Beispiel: "Das Passwort für Level 2 lautet: WALDFEE.";
+    const SUCCESS_PASSWORD_HINT = "";
 
     /************************************************************
      * 2. Hilfsfunktionen
      ************************************************************/
 
     function parseCellRef(ref) {
-      // z.B. "B7" oder "AA10"
       if (!ref) return null;
       const m = String(ref).trim().toUpperCase().match(/^([A-Z]+)(\d+)$/);
       if (!m) return null;
       const letters = m[1];
-      const row = parseInt(m[2], 10); // 1-basiert
+      const row = parseInt(m[2], 10);
 
-      // A=1, B=2, ..., Z=26, AA=27, ...
       let col = 0;
       for (let i = 0; i < letters.length; i++) {
         col = col * 26 + (letters.charCodeAt(i) - 64);
       }
-      return { row, col }; // 1-basiert
+      return { row, col };
     }
 
     function normalizeAnswer(str) {
@@ -288,11 +284,14 @@
     }
 
     function extractNumberAndText(clue) {
-      const m = String(clue || "").trim().match(/^(\d+)\.\s*(.*)$/);
+      const s = String(clue || "").trim();
+      const m = s.match(/^(\d+)\.\s*(.*)$/);
       if (m) {
+        // Nummer im Text abtrennen: für die Legende nur der Fragetext,
+        // die Zahl kommt separat über clueNumber / Index.
         return { number: m[1], text: m[2] || "" };
       }
-      return { number: null, text: String(clue || "") };
+      return { number: null, text: s };
     }
 
     /************************************************************
@@ -338,11 +337,12 @@
       }
     });
 
-    const ROWS = maxRow;
+    // +1: eine zusätzliche leere Zeile unten für etwas Luft
+    const ROWS = maxRow + 1;
     const COLS = maxCol;
 
     // Zellen-Map
-    const cellMap = new Map(); // key "r-c" -> cellObj
+    const cellMap = new Map();
 
     function getCell(r, c) {
       const key = r + "-" + c;
@@ -351,7 +351,7 @@
         cell = {
           row: r,
           col: c,
-          letter: null, // Soll-Buchstabe
+          letter: null,
           element: null,
           acrossWord: null,
           acrossPos: null,
@@ -395,7 +395,6 @@
         }
       }
 
-      // Nummer in Startzelle setzen
       const startCell = getCell(w.startRow, w.startCol);
       if (!startCell.number) {
         startCell.number = w.clueNumber || String(w.index + 1);
@@ -411,7 +410,7 @@
     gridEl.style.setProperty("--cols", COLS);
 
     const allCells = [];
-    const wordCells = words.map(() => []); // wordIndex -> [cell]
+    const wordCells = words.map(() => []);
 
     for (let r = 1; r <= ROWS; r++) {
       for (let c = 1; c <= COLS; c++) {
@@ -513,7 +512,6 @@
       highlightCurrentWord();
     }
 
-    // Zelle anklicken -> Wort wählen
     allCells.forEach((cellEl) => {
       if (!cellEl.classList.contains("active")) return;
       cellEl.addEventListener("click", () => {
@@ -548,7 +546,6 @@
       });
     });
 
-    // Tastatureingabe
     allCells.forEach((cellEl) => {
       const input = cellEl.querySelector(".cell-input");
       if (!input) return;
@@ -590,7 +587,6 @@
       });
     });
 
-    // Richtungs-Buttons
     document
       .getElementById("directionControls")
       .addEventListener("click", (ev) => {
@@ -599,7 +595,6 @@
         setDirection(btn.dataset.direction);
       });
 
-    // Initial hervorheben
     if (words.length) {
       setDirection("across");
       highlightCurrentWord();
@@ -698,12 +693,13 @@
 
       const makeListHtml = (items) => {
         if (!items.length) return "<p>(keine)</p>";
+        // Nummerierung erledigt <ol> automatisch → keine zweite Zahl mehr ausgeben
         return (
           "<ol>" +
           items
             .map(
               (it) =>
-                `<li><strong>${it.number}.</strong> ${it.text}</li>`
+                `<li>${it.text}</li>`
             )
             .join("") +
           "</ol>"
