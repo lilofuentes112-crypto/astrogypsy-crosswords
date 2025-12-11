@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Zertifikats-Kreuzworträtsel – Level X</title>
+  <title>Astro-Kreuzworträtsel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -107,21 +107,19 @@
     }
 
     .cell {
-  width: 32px;
-  height: 32px;
-  /* standard: durchsichtig, kein Rahmen */
-  background-color: transparent;
-  border: none;
-  position: relative;
-  box-sizing: border-box;
-}
+      width: 32px;
+      height: 32px;
+      background-color: #000000;        /* tiefschwarz */
+      border: 1px solid var(--astro-border);
+      position: relative;
+      box-sizing: border-box;
+    }
 
-/* nur aktive Felder (mit Buchstaben) bekommen Rahmen + Schwarz */
-.cell.active {
-  background-color: #000000;
-  border: 1px solid var(--astro-border);
-  border-color: rgba(245, 178, 107, 0.35);
-}
+    .cell.active {
+      border-color: rgba(245, 178, 107, 0.35);
+      /* kein Hintergrundwechsel mehr */
+    }
+
     .cell input {
       width: 100%;
       height: 100%;
@@ -131,14 +129,14 @@
       font-size: 18px;
       font-weight: 600;
       text-align: center;
-      line-height: 32px;               /* = Zellenhöhe → nichts abgeschnitten */
+      line-height: 32px;               /* = Zellenhöhe */
       padding: 0;
       box-sizing: border-box;
     }
 
     .cell input:focus {
       outline: none;
-      background: transparent;         /* kein Farbwechsel beim Klick */
+      background: transparent;
     }
 
     .cell-number {
@@ -152,15 +150,15 @@
     }
 
     .cell.selected .cell-input {
-      background: transparent;         /* Selektionsfarbe entfernt */
+      background: transparent;
     }
 
     .cell.error .cell-input {
-      background: var(--astro-cell-error);  /* Fehler rot hinterlegt */
+      background: var(--astro-cell-error);
     }
 
     .cell.correct .cell-input {
-      background: var(--astro-cell-bg);     /* korrekt leicht hervorgehoben */
+      background: var(--astro-cell-bg);
     }
 
     .status {
@@ -217,7 +215,7 @@
 </head>
 <body>
   <div class="page">
-    <h1>Zertifikats-Kreuzworträtsel – Level X</h1>
+    <h1>Steinbock-Rätsel</h1>
 
     <div class="board-frame">
       <div class="controls" id="directionControls">
@@ -228,7 +226,7 @@
       <div
         id="gridWrapper"
         class="grid-wrapper"
-        style="background-image: url(https://static.wixstatic.com/media/6d3632_f3c4595383ee4bfca32efd575af1bb6a~mv2.png);"
+        style="background-image: url('https://static.wixstatic.com/media/6d3632_8671621dade74457977217105254aadf~mv2.png');"
       >
         <div id="grid" class="grid"></div>
       </div>
@@ -249,7 +247,7 @@
      * 1. WORDS_INPUT – hier fügst du den Block aus dem Generator ein
      ************************************************************/
 
-const WORDS_INPUT = [
+    const WORDS_INPUT = [
   {
     "answer": "WASSERMANN",
     "clue": "1. Welches Sternzeichen folgt dem Steinbock?",
@@ -310,36 +308,31 @@ const WORDS_INPUT = [
     "start": "D24",
     "direction": "across"
   }
-];      
-
+];
     /************************************************************
      * 1a. Erfolgs-Text / Passwort-Hinweis pro Rätsel festlegen
      ************************************************************/
 
     const SUCCESS_MESSAGE =
       "Gratuliere, du hast dieses Rätsel erfolgreich abgeschlossen.";
-    // Optionaler Zusatz (z.B. Passwort für das nächste Level). Leer lassen, wenn nicht benötigt.
-    const SUCCESS_PASSWORD_HINT =
-      ""; // Beispiel: "Das Passwort für Level 2 lautet: WALDFEE.";
+    const SUCCESS_PASSWORD_HINT = "";
 
     /************************************************************
      * 2. Hilfsfunktionen
      ************************************************************/
 
     function parseCellRef(ref) {
-      // z.B. "B7" oder "AA10"
       if (!ref) return null;
       const m = String(ref).trim().toUpperCase().match(/^([A-Z]+)(\d+)$/);
       if (!m) return null;
       const letters = m[1];
-      const row = parseInt(m[2], 10); // 1-basiert
+      const row = parseInt(m[2], 10);
 
-      // A=1, B=2, ..., Z=26, AA=27, ...
       let col = 0;
       for (let i = 0; i < letters.length; i++) {
         col = col * 26 + (letters.charCodeAt(i) - 64);
       }
-      return { row, col }; // 1-basiert
+      return { row, col };
     }
 
     function normalizeAnswer(str) {
@@ -349,11 +342,14 @@ const WORDS_INPUT = [
     }
 
     function extractNumberAndText(clue) {
-      const m = String(clue || "").trim().match(/^(\d+)\.\s*(.*)$/);
+      const s = String(clue || "").trim();
+      const m = s.match(/^(\d+)\.\s*(.*)$/);
       if (m) {
+        // Nummer im Text abtrennen: für die Legende nur der Fragetext,
+        // die Zahl kommt separat über clueNumber / Index.
         return { number: m[1], text: m[2] || "" };
       }
-      return { number: null, text: String(clue || "") };
+      return { number: null, text: s };
     }
 
     /************************************************************
@@ -399,11 +395,12 @@ const WORDS_INPUT = [
       }
     });
 
-    const ROWS = maxRow;
+    // +1: eine zusätzliche leere Zeile unten für etwas Luft
+    const ROWS = maxRow + 1;
     const COLS = maxCol;
 
     // Zellen-Map
-    const cellMap = new Map(); // key "r-c" -> cellObj
+    const cellMap = new Map();
 
     function getCell(r, c) {
       const key = r + "-" + c;
@@ -412,7 +409,7 @@ const WORDS_INPUT = [
         cell = {
           row: r,
           col: c,
-          letter: null, // Soll-Buchstabe
+          letter: null,
           element: null,
           acrossWord: null,
           acrossPos: null,
@@ -456,7 +453,6 @@ const WORDS_INPUT = [
         }
       }
 
-      // Nummer in Startzelle setzen
       const startCell = getCell(w.startRow, w.startCol);
       if (!startCell.number) {
         startCell.number = w.clueNumber || String(w.index + 1);
@@ -472,7 +468,7 @@ const WORDS_INPUT = [
     gridEl.style.setProperty("--cols", COLS);
 
     const allCells = [];
-    const wordCells = words.map(() => []); // wordIndex -> [cell]
+    const wordCells = words.map(() => []);
 
     for (let r = 1; r <= ROWS; r++) {
       for (let c = 1; c <= COLS; c++) {
@@ -574,7 +570,6 @@ const WORDS_INPUT = [
       highlightCurrentWord();
     }
 
-    // Zelle anklicken -> Wort wählen
     allCells.forEach((cellEl) => {
       if (!cellEl.classList.contains("active")) return;
       cellEl.addEventListener("click", () => {
@@ -609,7 +604,6 @@ const WORDS_INPUT = [
       });
     });
 
-    // Tastatureingabe
     allCells.forEach((cellEl) => {
       const input = cellEl.querySelector(".cell-input");
       if (!input) return;
@@ -651,7 +645,6 @@ const WORDS_INPUT = [
       });
     });
 
-    // Richtungs-Buttons
     document
       .getElementById("directionControls")
       .addEventListener("click", (ev) => {
@@ -660,7 +653,6 @@ const WORDS_INPUT = [
         setDirection(btn.dataset.direction);
       });
 
-    // Initial hervorheben
     if (words.length) {
       setDirection("across");
       highlightCurrentWord();
@@ -759,12 +751,13 @@ const WORDS_INPUT = [
 
       const makeListHtml = (items) => {
         if (!items.length) return "<p>(keine)</p>";
+        // Nummerierung erledigt <ol> automatisch → keine zweite Zahl mehr ausgeben
         return (
           "<ol>" +
           items
             .map(
               (it) =>
-                `<li><strong>${it.number}.</strong> ${it.text}</li>`
+                `<li>${it.text}</li>`
             )
             .join("") +
           "</ol>"
@@ -782,3 +775,4 @@ const WORDS_INPUT = [
   </script>
 </body>
 </html>
+
