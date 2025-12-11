@@ -250,11 +250,13 @@ Sternbild     C10   across"></textarea>
           );
         }
         return {
-          answer: w.answerKey,
-          clue: clue ? `${clue.number}. ${clue.question}` : "",
-          start: w.start,
-          direction: w.direction === "down" ? "down" : "across",
-        };
+  answer: w.answerKey,
+  // keine Nummer mehr in den Text schreiben – nur die Frage
+  clue: clue ? clue.question : "",
+  start: w.start,
+  direction: w.direction === "down" ? "down" : "across",
+};
+
       });
 
       if (errors.length > 0) {
