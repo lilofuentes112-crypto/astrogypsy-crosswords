@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Astrogypsy Kreuzworträtsel – Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    body {
+      margin: 0;
+      padding: 24px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #000;
+      color: #f5b26b;
+    }
+
+    h1 {
+      font-size: 24px;
+      margin-bottom: 8px;
+    }
+
+    h2 {
+      font-size: 18px;
+      margin-top: 24px;
+      margin-bottom: 8px;
+    }
+
+    p {
+      margin: 4px 0 8px;
+      color: #f5e1c3;
+      font-size: 14px;
+    }
+
+    .section {
+      border: 1px solid #f5b26b;
+      padding: 16px;
+      margin-bottom: 24px;
+      border-radius: 4px;
+      background: #111;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      background: #000;
+      color: #f5e1c3;
+      border: 1px solid #f5b26b;
+      padding: 8px;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 13px;
+      box-sizing: border-box;
+      resize: vertical;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #f5e1c3b3;
+      margin-bottom: 8px;
+    }
+
+    button {
+      background: #f5b26b;
+      color: #000;
+      border: none;
+      padding: 8px 16px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 8px;
+      margin-top: 8px;
+    }
+
+    button:hover {
+      background: #ffc27a;
+    }
+
+    .error {
+      color: #ff8080;
+      font-size: 13px;
+      margin-top: 8px;
+      white-space: pre-line;
+    }
+
+    .ok {
+      color: #7cff9d;
+      font-size: 13px;
+      margin-top: 8px;
+      white-space: pre-line;
+    }
+
+    .output-label {
+      margin-top: 16px;
+    }
+
+    #output {
+      min-height: 220px;
+      white-space: pre;
+    }
+  </style>
+</head>
+<body>
+  <h1>Astrogypsy Kreuzworträtsel – Generator</h1>
+  <p class="hint">
+    Schritt 1: In Excel alles eintragen. Dann die Bereiche unter <strong>WÖRTER</strong> und
+    <strong>FRAGEN</strong> kopieren und hier einfügen. Excel setzt dabei automatisch Tabulatoren.
+  </p>
+
+  <div class="section">
+    <h2>1. WÖRTER aus Excel einfügen</h2>
+    <p class="hint">
+      Markiere in Excel unter <strong>WÖRTER</strong> die drei Spalten<br />
+      <strong>Antwort – Start – Richtung</strong> (ohne Überschrift), z.B.:
+      <br />Astrologie &nbsp;&nbsp;B2 &nbsp;&nbsp;across
+    </p>
+    <label for="wordsInput">Rohdaten WÖRTER (eine Zeile pro Wort, Spalten durch Tab oder Semikolon getrennt)</label>
+    <textarea id="wordsInput" placeholder="Beispiel:
+Astrologie    B2    across
+Chiron        E3    down
+Aspekt        G5    down
+Sternbild     C10   across"></textarea>
+  </div>
+
+  <div class="section">
+    <h2>2. FRAGEN aus Excel einfügen</h2>
+    <p class="hint">
+      Markiere in Excel unter <strong>FRAGEN</strong> die drei Spalten<br />
+      <strong>Nummer – Frage – Antwort</strong> (ohne Überschrift), z.B.:
+      <br />1 &nbsp;&nbsp;Lehre von ... &nbsp;&nbsp;Astrologie
+    </p>
+    <label for="cluesInput">Rohdaten FRAGEN (eine Zeile pro Frage, Spalten durch Tab oder Semikolon getrennt)</label>
+    <textarea id="cluesInput" placeholder="Beispiel:
+1    Lehre von den Zusammenhängen zwischen Gestirnen und irdischen Ereignissen.    Astrologie
+2    Planetoid, der oft mit Wunde und Heilung verbunden wird.                     Chiron
+3    Winkelbeziehung zwischen zwei Planeten.                                      Aspekt
+4    Worin stehen die Sternbilder in der Nacht?                                   Sternbild"></textarea>
+  </div>
+
+  <div class="section">
+    <h2>3. Code erzeugen</h2>
+    <button type="button" onclick="generateCode()">Code erzeugen</button>
+    <button type="button" onclick="clearAll()">Alles löschen</button>
+    <div id="status"></div>
+
+    <label class="output-label" for="output">Ausgabe: WORDS_INPUT-Block für level-Seite</label>
+    <textarea id="output" readonly></textarea>
+    <p class="hint">
+      Diesen Block kopierst du später in die Level-HTML (z.B. <code>level1.html</code>) an die Stelle, an der
+      <code>WORDS_INPUT</code> definiert wird.
+    </p>
+  </div>
+
+  <script>
+    function parseTable(raw) {
+      const lines = raw
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
+
+      return lines.map((line, idx) => {
+        // Tab oder Semikolon als Trenner erlauben
+        const parts = line.split(/\t|;/).map((p) => p.trim());
+        return { parts, lineNumber: idx + 1, raw: line };
+      });
+    }
+
+    function normalizeAnswer(str) {
+      if (!str) return "";
+      return str
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, ""); // Leerzeichen raus, damit ASTRO LOGIE = ASTROLOGIE
+    }
+
+    function generateCode() {
+      const wordsRaw = document.getElementById("wordsInput").value;
+      const cluesRaw = document.getElementById("cluesInput").value;
+      const statusEl = document.getElementById("status");
+      const outputEl = document.getElementById("output");
+
+      statusEl.textContent = "";
+      outputEl.value = "";
+
+      if (!wordsRaw.trim() || !cluesRaw.trim()) {
+        statusEl.innerHTML =
+          '<div class="error">Bitte sowohl WÖRTER als auch FRAGEN einfügen.</div>';
+        return;
+      }
+
+      const wordsRows = parseTable(wordsRaw);
+      const clueRows = parseTable(cluesRaw);
+
+      const errors = [];
+
+      // Wörter einlesen: Antwort, Start, Richtung
+      const words = wordsRows.map((row) => {
+        const [answer, start, direction] = row.parts;
+        if (!answer || !start || !direction) {
+          errors.push(
+            `WÖRTER: Zeile ${row.lineNumber} hat nicht genau 3 Spalten (Antwort / Start / Richtung):\n${row.raw}`
+          );
+        }
+        return {
+          rawAnswer: answer || "",
+          answerKey: normalizeAnswer(answer),
+          start: (start || "").toUpperCase(),
+          direction: (direction || "").toLowerCase(),
+        };
+      });
+
+      // Fragen einlesen: Nummer, Frage, Antwort
+      const clueMap = new Map();
+      clueRows.forEach((row) => {
+        const [num, question, answer] = row.parts;
+        if (!num || !question || !answer) {
+          errors.push(
+            `FRAGEN: Zeile ${row.lineNumber} hat nicht genau 3 Spalten (Nummer / Frage / Antwort):\n${row.raw}`
+          );
+          return;
+        }
+        const key = normalizeAnswer(answer);
+        if (!key) {
+          errors.push(
+            `FRAGEN: Antwort in Zeile ${row.lineNumber} ist leer oder ungültig:\n${row.raw}`
+          );
+          return;
+        }
+        if (clueMap.has(key)) {
+          errors.push(
+            `FRAGEN: Doppelte Antwort „${answer}“ (Zeile ${row.lineNumber}).`
+          );
+        }
+        clueMap.set(key, {
+          number: String(num).trim(),
+          question: question.trim(),
+          answerRaw: answer.trim(),
+        });
+      });
+
+      // Mergen: jedem Wort seine Frage zuordnen
+      const merged = words.map((w, index) => {
+        const clue = clueMap.get(w.answerKey);
+        if (!clue) {
+          errors.push(
+            `Zu dem Wort „${w.rawAnswer}“ (WÖRTER, Zeile ${index + 1}) wurde in FRAGEN keine passende Antwort gefunden.`
+          );
+        }
+        return {
+          answer: w.answerKey,
+          clue: clue ? `${clue.number}. ${clue.question}` : "",
+          start: w.start,
+          direction: w.direction === "down" ? "down" : "across",
+        };
+      });
+
+      if (errors.length > 0) {
+        statusEl.innerHTML =
+          '<div class="error">' + errors.join("\n\n") + "</div>";
+      } else {
+        statusEl.innerHTML =
+          '<div class="ok">Alles ok. WORDS_INPUT wurde erzeugt.</div>';
+      }
+
+      // JS-Code erzeugen
+      const js = `const WORDS_INPUT = ${JSON.stringify(merged, null, 2)};`;
+      outputEl.value = js;
+    }
+
+    function clearAll() {
+      document.getElementById("wordsInput").value = "";
+      document.getElementById("cluesInput").value = "";
+      document.getElementById("output").value = "";
+      document.getElementById("status").textContent = "";
+    }
+  </script>
+</body>
+</html>
