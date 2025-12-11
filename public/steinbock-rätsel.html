@@ -11,7 +11,6 @@
       --astro-text: #f5e1c3;
       --astro-bg: #000000;
       --astro-cell-bg: rgba(0, 0, 0, 0.65);
-      --astro-cell-selected: rgba(255, 255, 255, 0.12);
       --astro-cell-error: rgba(255, 64, 64, 0.4);
     }
 
@@ -89,7 +88,7 @@
       position: relative;
       width: 100%;
       max-width: 580px;
-      margin: 0 auto 24px;           /* etwas mehr Abstand nach unten */
+      margin: 0 auto 24px;
       aspect-ratio: 1 / 1;
       border: 1px solid var(--astro-border);
       overflow: hidden;
@@ -106,18 +105,20 @@
       grid-template-rows: repeat(var(--rows), 1fr);
     }
 
+    /* Leere Zellen: komplett unsichtbar, keine Linien */
     .cell {
       width: 32px;
       height: 32px;
-      background-color: transparent;   /* Bild sichtbar lassen */
-      border: 1px solid var(--astro-border);
+      background-color: transparent;
+      border: none;
       position: relative;
       box-sizing: border-box;
     }
 
+    /* Nur belegte Zellen (mit Buchstaben) schwarz + Rahmen */
     .cell.active {
-      border-color: rgba(245, 178, 107, 0.35);
-      background-color: #000000;       /* NUR belegte Zellen schwarz */
+      border: 1px solid var(--astro-border);
+      background-color: #000000;
     }
 
     .cell input {
@@ -147,10 +148,6 @@
       color: var(--astro-border);
       pointer-events: none;
       text-shadow: 0 0 3px #000;
-    }
-
-    .cell.selected .cell-input {
-      background: transparent;
     }
 
     .cell.error .cell-input {
@@ -247,7 +244,7 @@
      * 1. WORDS_INPUT – hier fügst du den Block aus dem Generator ein
      ************************************************************/
 
-    const WORDS_INPUT = [
+const WORDS_INPUT = [
   {
     "answer": "WASSERMANN",
     "clue": "1. Welches Sternzeichen folgt dem Steinbock?",
@@ -310,7 +307,7 @@
   }
 ];
     /************************************************************
-     * 1a. Erfolgs-Text / Passwort-Hinweis pro Rätsel festlegen
+     * 1a. Erfolgs-Text / Passwort-Hinweis
      ************************************************************/
 
     const SUCCESS_MESSAGE =
@@ -426,15 +423,7 @@
         const ch = w.answer[i];
 
         if (cell.letter && cell.letter !== ch) {
-          console.warn(
-            "Buchstabenkonflikt in Zelle",
-            r,
-            c,
-            "zwischen",
-            cell.letter,
-            "und",
-            ch
-          );
+          console.warn("Buchstabenkonflikt in Zelle", r, c, "zwischen", cell.letter, "und", ch);
         }
         cell.letter = ch;
 
@@ -517,9 +506,7 @@
 
     function setDirection(dir) {
       currentDirection = dir === "down" ? "down" : "across";
-      const buttons = document.querySelectorAll(
-        "#directionControls .btn.toggle"
-      );
+      const buttons = document.querySelectorAll("#directionControls .btn.toggle");
       buttons.forEach((b) => {
         if (b.dataset.direction === currentDirection) {
           b.classList.add("active");
@@ -538,7 +525,6 @@
 
     function highlightCurrentWord() {
       allCells.forEach((c) => c.classList.remove("selected"));
-
       if (currentWordIndex == null) return;
 
       const cells = getCellsForWord(currentWordIndex);
@@ -571,10 +557,7 @@
         if (currentDirection === "across" && cellEl.dataset.acrossWord != null) {
           wordIndex = Number(cellEl.dataset.acrossWord);
           currentDirection = "across";
-        } else if (
-          currentDirection === "down" &&
-          cellEl.dataset.downWord != null
-        ) {
+        } else if (currentDirection === "down" && cellEl.dataset.downWord != null) {
           wordIndex = Number(cellEl.dataset.downWord);
           currentDirection = "down";
         } else if (cellEl.dataset.acrossWord != null) {
@@ -711,12 +694,8 @@
       highlightCurrentWord();
     }
 
-    document
-      .getElementById("checkBtn")
-      .addEventListener("click", checkSolution);
-    document
-      .getElementById("clearBtn")
-      .addEventListener("click", clearSolution);
+    document.getElementById("checkBtn").addEventListener("click", checkSolution);
+    document.getElementById("clearBtn").addEventListener("click", clearSolution);
 
     /************************************************************
      * 7. Legende (Fragen) anzeigen
@@ -743,16 +722,12 @@
         else down.push(entry);
       });
 
+      // WICHTIG: Nummerierung nur einmal – <ol> nummeriert automatisch
       const makeListHtml = (items) => {
         if (!items.length) return "<p>(keine)</p>";
         return (
           "<ol>" +
-          items
-            .map(
-              (it) =>
-                `<li><strong>${it.number}.</strong> ${it.text}</li>`
-            )
-            .join("") +
+          items.map((it) => `<li>${it.text}</li>`).join("") +
           "</ol>"
         );
       };
