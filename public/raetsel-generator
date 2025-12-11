@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <title>Astrogypsy Kreuzworträtsel – Generator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    :root {
+      --astro-border: #f5b26b;
+      --astro-text: #f5e1c3;
+      --astro-bg: #000000;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: var(--astro-bg);
+      color: var(--astro-text);
+    }
+
+    .page {
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      font-size: 22px;
+      margin: 0 0 8px;
+      color: var(--astro-border);
+      text-align: center;
+    }
+
+    h2 {
+      font-size: 16px;
+      margin: 18px 0 6px;
+      color: var(--astro-border);
+    }
+
+    p {
+      margin: 4px 0 8px;
+      font-size: 13px;
+    }
+
+    .section {
+      border: 1px solid var(--astro-border);
+      padding: 10px 12px;
+      margin-bottom: 16px;
+      border-radius: 4px;
+      background: #111111;
+    }
+
+    label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 4px;
+      font-size: 13px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 120px;
+      background: #000000;
+      color: var(--astro-text);
+      border: 1px solid var(--astro-border);
+      padding: 6px;
+      font-family: "Consolas", "Courier New", monospace;
+      font-size: 12px;
+      resize: vertical;
+    }
+
+    .hint {
+      font-size: 12px;
+      color: #f5e1c3b3;
+      margin-bottom: 6px;
+    }
+
+    button {
+      background: var(--astro-border);
+      color: #000;
+      border: none;
+      padding: 6px 14px;
+      font-weight: 600;
+      border-radius: 4px;
+      cursor: pointer;
+      margin-right: 6px;
+      margin-top: 6px;
+      font-size: 13px;
+    }
+
+    button:hover {
+      filter: brightness(1.06);
+    }
+
+    .error {
+      color: #ff8080;
+      font-size: 12px;
+      margin-top: 6px;
+      white-space: pre-line;
+    }
+
+    .ok {
+      color: #7cff9d;
+      font-size: 12px;
+      margin-top: 6px;
+      white-space: pre-line;
+    }
+
+    #output {
+      min-height: 180px;
+      white-space: pre;
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 10px;
+      }
+      h1 {
+        font-size: 18px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Astrogypsy Kreuzworträtsel – Generator</h1>
+    <p class="hint">
+      Ablauf: In deiner Excel-Vorlage alles eintragen. Dann unten bei <strong>WÖRTER</strong> und
+      <strong>FRAGEN</strong> jeweils die drei Spalten kopieren (ohne Überschriften) und hier einfügen.
+      Excel setzt dabei automatisch Tabulatoren. Danach auf „Code erzeugen“ klicken.
+    </p>
+
+    <div class="section">
+      <h2>1. WÖRTER aus Excel</h2>
+      <p class="hint">
+        In Excel den Bereich unter <strong>WÖRTER</strong> markieren:<br />
+        Spalten: <strong>Antwort – Start – Richtung</strong> (ohne Zeile „Antwort/Start/Richtung“).<br />
+        Beispiel-Zeilen:
+        <br />Astrologie &nbsp;&nbsp;B7 &nbsp;&nbsp;across
+        <br />Chiron &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;E3 &nbsp;&nbsp;down
+      </p>
+      <label for="wordsInput">Rohdaten WÖRTER (eine Zeile pro Wort)</label>
+      <textarea id="wordsInput" placeholder="Beispiel:
+Astrologie    B7    across
+Chiron        E3    down
+Aspekt        H4    down
+Sternbild     B7    down"></textarea>
+    </div>
+
+    <div class="section">
+      <h2>2. FRAGEN aus Excel</h2>
+      <p class="hint">
+        In Excel den Bereich unter <strong>FRAGEN</strong> markieren:<br />
+        Spalten: <strong>Nummer – Frage – Antwort</strong> (ohne Zeile „Nummer/Frage/Antwort“).<br />
+        Beispiel:
+        <br />1 &nbsp;&nbsp;Lehre von den Zusammenhängen zwischen Gestirnen und irdischen Ereignissen. &nbsp;&nbsp;Astrologie
+      </p>
+      <label for="cluesInput">Rohdaten FRAGEN (eine Zeile pro Frage)</label>
+      <textarea id="cluesInput" placeholder="Beispiel:
+1    Lehre von den Zusammenhängen zwischen Gestirnen und irdischen Ereignissen.    Astrologie
+2    Planetoid, der oft mit Wunde und Heilung verbunden wird.                     Chiron
+3    Winkelbeziehung zwischen zwei Planeten.                                      Aspekt
+4    Worin stehen die Sternbilder in der Nacht?                                   Sternbild"></textarea>
+    </div>
+
+    <div class="section">
+      <h2>3. Code erzeugen</h2>
+      <button type="button" onclick="generateCode()">Code erzeugen</button>
+      <button type="button" onclick="clearAll()">Alles löschen</button>
+      <div id="status"></div>
+
+      <label for="output" style="margin-top:10px;">Ausgabe: WORDS_INPUT-Block für Level-HTML</label>
+      <textarea id="output" readonly></textarea>
+      <p class="hint">
+        Diesen Block kopierst du in deine <code>levelX.html</code> an die Stelle, wo
+        <code>const WORDS_INPUT = [...]</code> steht.
+      </p>
+    </div>
+  </div>
+
+  <script>
+    function parseTable(raw) {
+      const lines = raw
+        .split(/\r?\n/)
+        .map((l) => l.trim())
+        .filter((l) => l.length > 0);
+
+      return lines.map((line, idx) => {
+        // Tab oder Semikolon als Trenner erlauben
+        const parts = line.split(/\t|;/).map((p) => p.trim());
+        return { parts, lineNumber: idx + 1, raw: line };
+      });
+    }
+
+    function normalizeAnswer(str) {
+      if (!str) return "";
+      return str
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, "");
+    }
+
+    function generateCode() {
+      const wordsRaw = document.getElementById("wordsInput").value;
+      const cluesRaw = document.getElementById("cluesInput").value;
+      const statusEl = document.getElementById("status");
+      const outputEl = document.getElementById("output");
+
+      statusEl.textContent = "";
+      outputEl.value = "";
+
+      if (!wordsRaw.trim() || !cluesRaw.trim()) {
+        statusEl.innerHTML =
+          '<div class="error">Bitte sowohl WÖRTER als auch FRAGEN einfügen.</div>';
+        return;
+      }
+
+      const wordsRows = parseTable(wordsRaw);
+      const clueRows = parseTable(cluesRaw);
+
+      const errors = [];
+
+      // Wörter: Antwort, Start, Richtung
+      const words = wordsRows.map((row) => {
+        const [answer, start, direction] = row.parts;
+        if (!answer || !start || !direction) {
+          errors.push(
+            `WÖRTER: Zeile ${row.lineNumber} hat nicht genau 3 Spalten (Antwort / Start / Richtung):\n${row.raw}`
+          );
+        }
+        return {
+          rawAnswer: answer || "",
+          answerKey: normalizeAnswer(answer),
+          start: (start || "").toUpperCase(),
+          direction: (direction || "").toLowerCase(),
+        };
+      });
+
+      // Fragen: Nummer, Frage, Antwort
+      const clueMap = new Map();
+      clueRows.forEach((row) => {
+        const [num, question, answer] = row.parts;
+        if (!num || !question || !answer) {
+          errors.push(
+            `FRAGEN: Zeile ${row.lineNumber} hat nicht genau 3 Spalten (Nummer / Frage / Antwort):\n${row.raw}`
+          );
+          return;
+        }
+        const key = normalizeAnswer(answer);
+        if (!key) {
+          errors.push(
+            `FRAGEN: Antwort in Zeile ${row.lineNumber} ist leer oder ungültig:\n${row.raw}`
+          );
+          return;
+        }
+        if (clueMap.has(key)) {
+          errors.push(
+            `FRAGEN: Doppelte Antwort „${answer}“ (Zeile ${row.lineNumber}).`
+          );
+        }
+        clueMap.set(key, {
+          number: String(num).trim(),
+          question: question.trim(),
+          answerRaw: answer.trim(),
+        });
+      });
+
+      // Zusammenführen
+      const merged = words.map((w, index) => {
+        const clue = clueMap.get(w.answerKey);
+        if (!clue) {
+          errors.push(
+            `Zu dem Wort „${w.rawAnswer}“ (WÖRTER, Zeile ${index + 1}) wurde in FRAGEN keine passende Antwort gefunden.`
+          );
+        }
+        return {
+          answer: w.answerKey,
+          clue: clue ? `${clue.number}. ${clue.question}` : "",
+          start: w.start,
+          direction: w.direction === "down" ? "down" : "across",
+        };
+      });
+
+      if (errors.length > 0) {
+        statusEl.innerHTML =
+          '<div class="error">' + errors.join("\n\n") + "</div>";
+      } else {
+        statusEl.innerHTML =
+          '<div class="ok">Alles ok. WORDS_INPUT wurde erzeugt.</div>';
+      }
+
+      const js = `const WORDS_INPUT = ${JSON.stringify(merged, null, 2)};`;
+      outputEl.value = js;
+    }
+
+    function clearAll() {
+      document.getElementById("wordsInput").value = "";
+      document.getElementById("cluesInput").value = "";
+      document.getElementById("output").value = "";
+      document.getElementById("status").textContent = "";
+    }
+  </script>
+</body>
+</html>
