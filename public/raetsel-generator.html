@@ -270,20 +270,24 @@ Sternbild     B7    down"></textarea>
       });
 
       // Zusammenführen
-      const merged = words.map((w, index) => {
-        const clue = clueMap.get(w.answerKey);
-        if (!clue) {
-          errors.push(
-            `Zu dem Wort „${w.rawAnswer}“ (WÖRTER, Zeile ${index + 1}) wurde in FRAGEN keine passende Antwort gefunden.`
-          );
-        }
-        return {
-          answer: w.answerKey,
-          clue: clue ? `${clue.number}. ${clue.question}` : "",
-          start: w.start,
-          direction: w.direction === "down" ? "down" : "across",
-        };
-      });
+      // Mergen: jedem Wort seine Frage zuordnen
+const merged = words.map((w, index) => {
+  const clue = clueMap.get(w.answerKey);
+  if (!clue) {
+    errors.push(
+      `Zu dem Wort „${w.rawAnswer}“ (WÖRTER, Zeile ${index + 1}) wurde in FRAGEN keine passende Antwort gefunden.`
+    );
+  }
+  return {
+    answer: w.answerKey,
+    // Frage ohne Nummer
+    clue: clue ? clue.question : "",
+    // Nummer separat aus Excel übernehmen
+    number: clue ? clue.number : null,
+    start: w.start,
+    direction: w.direction === "down" ? "down" : "across",
+  };
+});
 
       if (errors.length > 0) {
         statusEl.innerHTML =
