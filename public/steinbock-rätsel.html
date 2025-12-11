@@ -107,19 +107,21 @@
     }
 
     .cell {
-      width: 32px;
-      height: 32px;
-      background-color: #000000;        /* tiefschwarz */
-      border: 1px solid var(--astro-border);
-      position: relative;
-      box-sizing: border-box;
-    }
+  width: 32px;
+  height: 32px;
+  /* standard: durchsichtig, kein Rahmen */
+  background-color: transparent;
+  border: none;
+  position: relative;
+  box-sizing: border-box;
+}
 
-    .cell.active {
-      border-color: rgba(245, 178, 107, 0.35);
-      /* kein Hintergrundwechsel mehr */
-    }
-
+/* nur aktive Felder (mit Buchstaben) bekommen Rahmen + Schwarz */
+.cell.active {
+  background-color: #000000;
+  border: 1px solid var(--astro-border);
+  border-color: rgba(245, 178, 107, 0.35);
+}
     .cell input {
       width: 100%;
       height: 100%;
@@ -250,65 +252,65 @@
 const WORDS_INPUT = [
   {
     "answer": "WASSERMANN",
-    "clue": ".. Welches Sternzeichen folgt dem Steinbock?",
+    "clue": "1. Welches Sternzeichen folgt dem Steinbock?",
     "start": "C13",
     "direction": "across"
   },
   {
     "answer": "KALT",
-    "clue": ".. Welche energetische Urqualität hat der Steinbock?",
+    "clue": "2. Welche energetische Urqualität hat der Steinbock?",
     "start": "J12",
     "direction": "down"
   },
   {
     "answer": "RUHIG",
-    "clue": ".. Verhält sich der Steinbock eher ruhig oder zappelig?",
+    "clue": "3. Verhält sich der Steinbock eher ruhig oder zappelig?",
     "start": "H13",
     "direction": "down"
   },
   {
     "answer": "GESPANNT",
-    "clue": ".. Steht der Steinbock zum Widder in einem harmonischen oder gespannten Verhältnis?",
+    "clue": "4. Steht der Steinbock zum Widder in einem harmonischen oder gespannten Verhältnis?",
     "start": "L7",
     "direction": "down"
   },
   {
     "answer": "TROCKEN",
-    "clue": ".. Welche formgebende Urqualität hat der Steinbock?",
+    "clue": "5. Welche formgebende Urqualität hat der Steinbock?",
     "start": "G8",
     "direction": "across"
   },
   {
     "answer": "KARDINAL",
-    "clue": ".. Welche Qualität hat der Steinbock (kardinal, fix oder veränderlich)",
+    "clue": "6. Welche Qualität hat der Steinbock (kardinal, fix oder veränderlich)",
     "start": "D12",
     "direction": "down"
   },
   {
     "answer": "ILLUSIONÄR",
-    "clue": ".. Was ist der Steinbock sicher nicht? Realist oder Illusionär?",
+    "clue": "7. Was ist der Steinbock sicher nicht? Realist oder Illusionär?",
     "start": "C19",
     "direction": "across"
   },
   {
     "answer": "KREBS",
-    "clue": ".. Welches Zeichen steht dem Steinbock gegenüber?",
+    "clue": "8. Welches Zeichen steht dem Steinbock gegenüber?",
     "start": "L18",
     "direction": "down"
   },
   {
     "answer": "SATURN",
-    "clue": ".. Welcher Planet wird dem Steinbock zugeordnet?",
+    "clue": "9. Welcher Planet wird dem Steinbock zugeordnet?",
     "start": "G19",
     "direction": "down"
   },
   {
     "answer": "KRONOS",
-    "clue": ".. Welcher griechische Gott wird dem Steinbock zugeordnet?",
+    "clue": "10. Welcher griechische Gott wird dem Steinbock zugeordnet?",
     "start": "D24",
     "direction": "across"
   }
-];  
+];      
 
     /************************************************************
      * 1a. Erfolgs-Text / Passwort-Hinweis pro Rätsel festlegen
