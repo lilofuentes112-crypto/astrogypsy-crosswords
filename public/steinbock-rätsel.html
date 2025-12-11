@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Astro-Kreuzworträtsel</title>
+  <title>Astro-Kreuzworträtsel X</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -89,7 +89,7 @@
       position: relative;
       width: 100%;
       max-width: 580px;
-      margin: 0 auto 16px;           /* zusätzlicher Abstand nach unten */
+      margin: 0 auto 24px;           /* etwas mehr Abstand nach unten */
       aspect-ratio: 1 / 1;
       border: 1px solid var(--astro-border);
       overflow: hidden;
@@ -109,7 +109,7 @@
     .cell {
       width: 32px;
       height: 32px;
-      background-color: #000000;        /* tiefschwarz */
+      background-color: transparent;   /* Bild sichtbar lassen */
       border: 1px solid var(--astro-border);
       position: relative;
       box-sizing: border-box;
@@ -117,7 +117,7 @@
 
     .cell.active {
       border-color: rgba(245, 178, 107, 0.35);
-      /* kein Hintergrundwechsel mehr */
+      background-color: #000000;       /* NUR belegte Zellen schwarz */
     }
 
     .cell input {
@@ -129,7 +129,7 @@
       font-size: 18px;
       font-weight: 600;
       text-align: center;
-      line-height: 32px;               /* = Zellenhöhe */
+      line-height: 32px;
       padding: 0;
       box-sizing: border-box;
     }
@@ -215,7 +215,7 @@
 </head>
 <body>
   <div class="page">
-    <h1>Steinbock-Rätsel</h1>
+    <h1>Steinbock-RätselX</h1>
 
     <div class="board-frame">
       <div class="controls" id="directionControls">
@@ -247,7 +247,7 @@
      * 1. WORDS_INPUT – hier fügst du den Block aus dem Generator ein
      ************************************************************/
 
-    const WORDS_INPUT = [
+const WORDS_INPUT = [
   {
     "answer": "WASSERMANN",
     "clue": "1. Welches Sternzeichen folgt dem Steinbock?",
@@ -315,7 +315,8 @@
 
     const SUCCESS_MESSAGE =
       "Gratuliere, du hast dieses Rätsel erfolgreich abgeschlossen.";
-    const SUCCESS_PASSWORD_HINT = "";
+    const SUCCESS_PASSWORD_HINT =
+      ""; // z.B.: "Das Passwort für Level 2 lautet: WALDFEE."
 
     /************************************************************
      * 2. Hilfsfunktionen
@@ -342,14 +343,11 @@
     }
 
     function extractNumberAndText(clue) {
-      const s = String(clue || "").trim();
-      const m = s.match(/^(\d+)\.\s*(.*)$/);
+      const m = String(clue || "").trim().match(/^(\d+)\.\s*(.*)$/);
       if (m) {
-        // Nummer im Text abtrennen: für die Legende nur der Fragetext,
-        // die Zahl kommt separat über clueNumber / Index.
         return { number: m[1], text: m[2] || "" };
       }
-      return { number: null, text: s };
+      return { number: null, text: String(clue || "") };
     }
 
     /************************************************************
@@ -378,7 +376,6 @@
         '<span class="status-error">WORDS_INPUT ist leer. Bitte füge den Block aus dem Generator ein.</span>';
     }
 
-    // Grid-Ausdehnung bestimmen
     let maxRow = 1;
     let maxCol = 1;
 
@@ -395,11 +392,9 @@
       }
     });
 
-    // +1: eine zusätzliche leere Zeile unten für etwas Luft
-    const ROWS = maxRow + 1;
+    const ROWS = maxRow;
     const COLS = maxCol;
 
-    // Zellen-Map
     const cellMap = new Map();
 
     function getCell(r, c) {
@@ -422,7 +417,6 @@
       return cell;
     }
 
-    // Wörter auf Zellen legen
     words.forEach((w) => {
       const len = w.answer.length;
       for (let i = 0; i < len; i++) {
@@ -751,16 +745,15 @@
 
       const makeListHtml = (items) => {
         if (!items.length) return "<p>(keine)</p>";
-        // Nummerierung erledigt <ol> automatisch → keine zweite Zahl mehr ausgeben
         return (
           "<ol>" +
           items
             .map(
               (it) =>
-                `<li>${it.text}</li>`
+                `<li><strong>${it.number}.</strong> ${it.text}</li>`
             )
             .join("") +
-          "</ol>"
+          "</ol>`
         );
       };
 
