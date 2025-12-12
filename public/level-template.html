@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Zertifikats-Kreuzworträtsel – Level X</title>
+  <title>Astro-Kreuzworträtsel </title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -11,7 +11,6 @@
       --astro-text: #f5e1c3;
       --astro-bg: #000000;
       --astro-cell-bg: rgba(0, 0, 0, 0.65);
-      --astro-cell-selected: rgba(255, 255, 255, 0.12);
       --astro-cell-error: rgba(255, 64, 64, 0.4);
     }
 
@@ -86,18 +85,16 @@
     }
 
     .grid-wrapper {
-      position: relative;
-      width: 100%;
-      max-width: 580px;
-      margin: 0 auto 16px;           /* zusätzlicher Abstand nach unten */
-      aspect-ratio: 1 / 1;
-      border: 1px solid var(--astro-border);
-      overflow: hidden;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-    }
-
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto 24px;
+  border: 1px solid var(--astro-border);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
     .grid {
       position: absolute;
       inset: 0;
@@ -106,18 +103,20 @@
       grid-template-rows: repeat(var(--rows), 1fr);
     }
 
+    /* Leere Zellen: komplett unsichtbar, keine Linien */
     .cell {
       width: 32px;
       height: 32px;
-      background-color: #000000;        /* tiefschwarz */
-      border: 1px solid var(--astro-border);
+      background-color: transparent;
+      border: none;
       position: relative;
       box-sizing: border-box;
     }
 
+    /* Nur belegte Zellen (mit Buchstaben) schwarz + Rahmen */
     .cell.active {
-      border-color: rgba(245, 178, 107, 0.35);
-      /* kein Hintergrundwechsel mehr */
+      border: 1px solid var(--astro-border);
+      background-color: #000000;
     }
 
     .cell input {
@@ -129,7 +128,7 @@
       font-size: 18px;
       font-weight: 600;
       text-align: center;
-      line-height: 32px;               /* = Zellenhöhe */
+      line-height: 32px;
       padding: 0;
       box-sizing: border-box;
     }
@@ -147,10 +146,6 @@
       color: var(--astro-border);
       pointer-events: none;
       text-shadow: 0 0 3px #000;
-    }
-
-    .cell.selected .cell-input {
-      background: transparent;
     }
 
     .cell.error .cell-input {
@@ -252,12 +247,13 @@
     ];
 
     /************************************************************
-     * 1a. Erfolgs-Text / Passwort-Hinweis pro Rätsel festlegen
+     * 1a. Erfolgs-Text / Passwort-Hinweis
      ************************************************************/
 
     const SUCCESS_MESSAGE =
       "Gratuliere, du hast dieses Rätsel erfolgreich abgeschlossen.";
-    const SUCCESS_PASSWORD_HINT = "";
+    const SUCCESS_PASSWORD_HINT =
+      ""; // z.B.: "Das Passwort für Level 2 lautet: WALDFEE."
 
     /************************************************************
      * 2. Hilfsfunktionen
@@ -284,43 +280,38 @@
     }
 
     function extractNumberAndText(clue) {
-      const s = String(clue || "").trim();
-      const m = s.match(/^(\d+)\.\s*(.*)$/);
+      const m = String(clue || "").trim().match(/^(\d+)\.\s*(.*)$/);
       if (m) {
-        // Nummer im Text abtrennen: für die Legende nur der Fragetext,
-        // die Zahl kommt separat über clueNumber / Index.
         return { number: m[1], text: m[2] || "" };
       }
-      return { number: null, text: s };
+      return { number: null, text: String(clue || "") };
     }
 
-    /************************************************************
-     * 3. Datenstruktur aus WORDS_INPUT aufbauen
-     ************************************************************/
+     /************************************************************
+ * 3. Datenstruktur aus WORDS_INPUT aufbauen
+ ************************************************************/
 
-    const words = WORDS_INPUT.map((w, idx) => {
-      const coord = parseCellRef(w.start);
-      const normAnswer = normalizeAnswer(w.answer);
-      const { number, text } = extractNumberAndText(w.clue);
-      return {
-        index: idx,
-        rawAnswer: w.answer,
-        answer: normAnswer,
-        clueRaw: w.clue,
-        clueNumber: number,
-        clueText: text,
-        startRow: coord ? coord.row : 1,
-        startCol: coord ? coord.col : 1,
-        direction: w.direction === "down" ? "down" : "across"
-      };
-    });
+const words = WORDS_INPUT.map((w, idx) => {
+  const coord = parseCellRef(w.start);
+  const normAnswer = normalizeAnswer(w.answer);
+  return {
+    index: idx,
+    rawAnswer: w.answer,
+    answer: normAnswer,
+    clueRaw: w.clue,
+    clueNumber: w.number ? String(w.number) : String(idx + 1),
+    clueText: w.clue,
+    startRow: coord ? coord.row : 1,
+    startCol: coord ? coord.col : 1,
+    direction: w.direction === "down" ? "down" : "across"
+  };
+});
 
-    if (!words.length) {
-      document.getElementById("status").innerHTML =
-        '<span class="status-error">WORDS_INPUT ist leer. Bitte füge den Block aus dem Generator ein.</span>';
-    }
+if (!words.length) {
+  document.getElementById("status").innerHTML =
+    '<span class="status-error">WORDS_INPUT ist leer. Bitte füge den Block aus dem Generator ein.</span>';
+}
 
-    // Grid-Ausdehnung bestimmen
     let maxRow = 1;
     let maxCol = 1;
 
@@ -337,11 +328,16 @@
       }
     });
 
-    // +1: eine zusätzliche leere Zeile unten für etwas Luft
-    const ROWS = maxRow + 1;
+    const ROWS = maxRow;
     const COLS = maxCol;
+// Höhe des Bild-/Rasterbereichs dynamisch anpassen
+const CELL_SIZE = 32;
+const EXTRA_BOTTOM = 32;
 
-    // Zellen-Map
+const gridWrapperEl = document.getElementById("gridWrapper");
+if (gridWrapperEl) {
+  gridWrapperEl.style.height = (ROWS * CELL_SIZE + EXTRA_BOTTOM) + "px";
+}
     const cellMap = new Map();
 
     function getCell(r, c) {
@@ -364,7 +360,6 @@
       return cell;
     }
 
-    // Wörter auf Zellen legen
     words.forEach((w) => {
       const len = w.answer.length;
       for (let i = 0; i < len; i++) {
@@ -374,15 +369,7 @@
         const ch = w.answer[i];
 
         if (cell.letter && cell.letter !== ch) {
-          console.warn(
-            "Buchstabenkonflikt in Zelle",
-            r,
-            c,
-            "zwischen",
-            cell.letter,
-            "und",
-            ch
-          );
+          console.warn("Buchstabenkonflikt in Zelle", r, c, "zwischen", cell.letter, "und", ch);
         }
         cell.letter = ch;
 
@@ -465,9 +452,7 @@
 
     function setDirection(dir) {
       currentDirection = dir === "down" ? "down" : "across";
-      const buttons = document.querySelectorAll(
-        "#directionControls .btn.toggle"
-      );
+      const buttons = document.querySelectorAll("#directionControls .btn.toggle");
       buttons.forEach((b) => {
         if (b.dataset.direction === currentDirection) {
           b.classList.add("active");
@@ -486,7 +471,6 @@
 
     function highlightCurrentWord() {
       allCells.forEach((c) => c.classList.remove("selected"));
-
       if (currentWordIndex == null) return;
 
       const cells = getCellsForWord(currentWordIndex);
@@ -519,10 +503,7 @@
         if (currentDirection === "across" && cellEl.dataset.acrossWord != null) {
           wordIndex = Number(cellEl.dataset.acrossWord);
           currentDirection = "across";
-        } else if (
-          currentDirection === "down" &&
-          cellEl.dataset.downWord != null
-        ) {
+        } else if (currentDirection === "down" && cellEl.dataset.downWord != null) {
           wordIndex = Number(cellEl.dataset.downWord);
           currentDirection = "down";
         } else if (cellEl.dataset.acrossWord != null) {
@@ -659,12 +640,8 @@
       highlightCurrentWord();
     }
 
-    document
-      .getElementById("checkBtn")
-      .addEventListener("click", checkSolution);
-    document
-      .getElementById("clearBtn")
-      .addEventListener("click", clearSolution);
+    document.getElementById("checkBtn").addEventListener("click", checkSolution);
+    document.getElementById("clearBtn").addEventListener("click", clearSolution);
 
     /************************************************************
      * 7. Legende (Fragen) anzeigen
@@ -691,17 +668,12 @@
         else down.push(entry);
       });
 
+      // WICHTIG: Nummerierung nur einmal – <ol> nummeriert automatisch
       const makeListHtml = (items) => {
         if (!items.length) return "<p>(keine)</p>";
-        // Nummerierung erledigt <ol> automatisch → keine zweite Zahl mehr ausgeben
         return (
           "<ol>" +
-          items
-            .map(
-              (it) =>
-                `<li>${it.text}</li>`
-            )
-            .join("") +
+          items.map((it) => `<li>${it.text}</li>`).join("") +
           "</ol>"
         );
       };
