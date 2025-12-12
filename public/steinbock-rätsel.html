@@ -242,64 +242,74 @@
      * 1. WORDS_INPUT – hier fügst du den Block aus dem Generator ein
      ************************************************************/
 
-const WORDS_INPUT = [
+    const WORDS_INPUT = [
   {
     "answer": "WASSERMANN",
-    "clue": "1. Welches Sternzeichen folgt dem Steinbock?",
+    "clue": "Welches Sternzeichen folgt dem Steinbock?",
+    "number": "1",
     "start": "C13",
     "direction": "across"
   },
   {
     "answer": "KALT",
-    "clue": "2. Welche energetische Urqualität hat der Steinbock?",
+    "clue": "Welche energetische Urqualität hat der Steinbock?",
+    "number": "2",
     "start": "J12",
     "direction": "down"
   },
   {
     "answer": "RUHIG",
-    "clue": "3. Verhält sich der Steinbock eher ruhig oder zappelig?",
+    "clue": "Verhält sich der Steinbock eher ruhig oder zappelig?",
+    "number": "3",
     "start": "H13",
     "direction": "down"
   },
   {
     "answer": "GESPANNT",
-    "clue": "4. Steht der Steinbock zum Widder in einem harmonischen oder gespannten Verhältnis?",
+    "clue": "Steht der Steinbock zum Widder in einem harmonischen oder gespannten Verhältnis?",
+    "number": "4",
     "start": "L7",
     "direction": "down"
   },
   {
     "answer": "TROCKEN",
-    "clue": "5. Welche formgebende Urqualität hat der Steinbock?",
+    "clue": "Welche formgebende Urqualität hat der Steinbock?",
+    "number": "5",
     "start": "G8",
     "direction": "across"
   },
   {
     "answer": "KARDINAL",
-    "clue": "6. Welche Qualität hat der Steinbock (kardinal, fix oder veränderlich)",
+    "clue": "Welche Qualität hat der Steinbock (kardinal, fix oder veränderlich)",
+    "number": "6",
     "start": "D12",
     "direction": "down"
   },
   {
     "answer": "ILLUSIONÄR",
-    "clue": "7. Was ist der Steinbock sicher nicht? Realist oder Illusionär?",
+    "clue": "Was ist der Steinbock sicher nicht? Realist oder Illusionär?",
+    "number": "7",
     "start": "C19",
     "direction": "across"
   },
   {
     "answer": "KREBS",
-    "clue": "8. Welches Zeichen steht dem Steinbock gegenüber?",
+    "clue": "Welches Zeichen steht dem Steinbock gegenüber?",
+    "number": "8",
     "start": "L18",
     "direction": "down"
   },
   {
     "answer": "SATURN",
-    "clue": "9. Welcher Planet wird dem Steinbock zugeordnet?",
+    "clue": "Welcher Planet wird dem Steinbock zugeordnet?",
+    "number": "9",
     "start": "G19",
     "direction": "down"
   },
   {
     "answer": "KRONOS",
-    "clue": "10. Welcher griechische Gott wird dem Steinbock zugeordnet?",
+    "clue": "Welcher griechische Gott wird dem Steinbock zugeordnet?",
+    "number": "10",
     "start": "D24",
     "direction": "across"
   }
@@ -345,31 +355,30 @@ const WORDS_INPUT = [
       return { number: null, text: String(clue || "") };
     }
 
-    /************************************************************
-     * 3. Datenstruktur aus WORDS_INPUT aufbauen
-     ************************************************************/
+     /************************************************************
+ * 3. Datenstruktur aus WORDS_INPUT aufbauen
+ ************************************************************/
 
-    const words = WORDS_INPUT.map((w, idx) => {
-      const coord = parseCellRef(w.start);
-      const normAnswer = normalizeAnswer(w.answer);
-      const { number, text } = extractNumberAndText(w.clue);
-      return {
-        index: idx,
-        rawAnswer: w.answer,
-        answer: normAnswer,
-        clueRaw: w.clue,
-        clueNumber: number,
-        clueText: text,
-        startRow: coord ? coord.row : 1,
-        startCol: coord ? coord.col : 1,
-        direction: w.direction === "down" ? "down" : "across"
-      };
-    });
+const words = WORDS_INPUT.map((w, idx) => {
+  const coord = parseCellRef(w.start);
+  const normAnswer = normalizeAnswer(w.answer);
+  return {
+    index: idx,
+    rawAnswer: w.answer,
+    answer: normAnswer,
+    clueRaw: w.clue,
+    clueNumber: w.number ? String(w.number) : String(idx + 1),
+    clueText: w.clue,
+    startRow: coord ? coord.row : 1,
+    startCol: coord ? coord.col : 1,
+    direction: w.direction === "down" ? "down" : "across"
+  };
+});
 
-    if (!words.length) {
-      document.getElementById("status").innerHTML =
-        '<span class="status-error">WORDS_INPUT ist leer. Bitte füge den Block aus dem Generator ein.</span>';
-    }
+if (!words.length) {
+  document.getElementById("status").innerHTML =
+    '<span class="status-error">WORDS_INPUT ist leer. Bitte füge den Block aus dem Generator ein.</span>';
+}
 
     let maxRow = 1;
     let maxCol = 1;
@@ -391,7 +400,7 @@ const WORDS_INPUT = [
     const COLS = maxCol;
 // Höhe des Bild-/Rasterbereichs dynamisch anpassen
 const CELL_SIZE = 32;
-const EXTRA_BOTTOM = 12;
+const EXTRA_BOTTOM = 32;
 
 const gridWrapperEl = document.getElementById("gridWrapper");
 if (gridWrapperEl) {
