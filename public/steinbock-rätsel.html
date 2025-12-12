@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Astro-Kreuzworträtsel</title>
+  <title>Astro-Kreuzworträtsel </title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
@@ -14,7 +14,9 @@
       --astro-cell-error: rgba(255, 64, 64, 0.4);
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     body {
       margin: 0;
@@ -78,60 +80,62 @@
       font-weight: 600;
     }
 
-    .btn:hover { filter: brightness(1.05); }
-
-    /* Bildbereich: Höhe wird in JS gesetzt (ROWS*32 + Abstand unten) */
-    .grid-wrapper {
-      position: relative;
-      width: 100%;
-      max-width: 580px;
-      margin: 0 auto 24px;
-      border: 1px solid var(--astro-border);
-      overflow: hidden;
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
+    .btn:hover {
+      filter: brightness(1.05);
     }
 
+    .grid-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  margin: 0 auto 24px;
+  border: 1px solid var(--astro-border);
+  overflow: hidden;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
     .grid {
       position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
+      inset: 0;
       display: grid;
       grid-template-columns: repeat(var(--cols), 1fr);
       grid-template-rows: repeat(var(--rows), 1fr);
     }
 
-    /* Leere Zellen: unsichtbar */
+    /* Leere Zellen: komplett unsichtbar, keine Linien */
     .cell {
-      width: 32px;
-      height: 32px;
+      width: 100%;
+      height: 100%;
       background-color: transparent;
       border: none;
       position: relative;
+      box-sizing: border-box;
     }
 
-    /* Nur belegte Zellen sichtbar */
+    /* Nur belegte Zellen (mit Buchstaben) schwarz + Rahmen */
     .cell.active {
       border: 1px solid var(--astro-border);
       background-color: #000000;
     }
 
-    .cell input {
-      width: 100%;
-      height: 100%;
-      border: none;
+    .cell input{
+  width:100%;
+  height:100%;
+  border:none;
+  background:transparent;
+  color:#f5e3c3;
+  font-weight:600;
+  text-align:center;
+  padding:0;
+  box-sizing:border-box;
+  font-size:clamp(14px, 3.2vw, 18px);
+  line-height:1;
+}
+    .cell input:focus {
+      outline: none;
       background: transparent;
-      color: #f5e3c3;
-      font-size: 18px;
-      font-weight: 600;
-      text-align: center;
-      line-height: 32px;
-      padding: 0;
     }
-
-    .cell input:focus { outline: none; }
 
     .cell-number {
       position: absolute;
@@ -143,8 +147,13 @@
       text-shadow: 0 0 3px #000;
     }
 
-    .cell.error .cell-input { background: var(--astro-cell-error); }
-    .cell.correct .cell-input { background: var(--astro-cell-bg); }
+    .cell.error .cell-input {
+      background: var(--astro-cell-error);
+    }
+
+    .cell.correct .cell-input {
+      background: var(--astro-cell-bg);
+    }
 
     .status {
       margin-top: 8px;
@@ -153,8 +162,13 @@
       min-height: 18px;
     }
 
-    .status-ok { color: #7cff9d; }
-    .status-error { color: #ff8080; }
+    .status-ok {
+      color: #7cff9d;
+    }
+
+    .status-error {
+      color: #ff8080;
+    }
 
     .legend {
       border-top: 1px solid var(--astro-border);
@@ -169,25 +183,33 @@
       color: var(--astro-border);
     }
 
-    .legend ul {
-      list-style: none;
-      padding-left: 0;
-      margin: 6px 0 10px;
+    .legend ol {
+      padding-left: 20px;
+      margin: 4px 0 8px;
     }
 
-    .legend li { margin: 6px 0; }
+    .legend li {
+      margin-bottom: 4px;
+    }
 
     @media (max-width: 600px) {
-      .page { padding: 12px 8px 24px; }
-      .board-frame { padding: 12px; }
-      h1 { font-size: 18px; }
+      .page {
+        padding: 12px 8px 24px;
+      }
+
+      .board-frame {
+        padding: 12px;
+      }
+
+      h1 {
+        font-size: 18px;
+      }
     }
   </style>
 </head>
-
 <body>
   <div class="page">
-    <h1>Steinbock-Rätsel</h1>
+    <h1>Steinbock-Kreuzworträtsel</h1>
 
     <div class="board-frame">
       <div class="controls" id="directionControls">
@@ -209,14 +231,16 @@
       </div>
 
       <div id="status" class="status"></div>
+
       <div class="legend" id="legend"></div>
     </div>
   </div>
 
   <script>
     /************************************************************
-     * 1. WORDS_INPUT – hier den Block aus dem Generator einfügen
+     * 1. WORDS_INPUT – hier fügst du den Block aus dem Generator ein
      ************************************************************/
+
     const WORDS_INPUT = [
   {
     "answer": "WASSERMANN",
@@ -289,16 +313,19 @@
     "direction": "across"
   }
 ];
-
     /************************************************************
      * 1a. Erfolgs-Text / Passwort-Hinweis
      ************************************************************/
-    const SUCCESS_MESSAGE = "Gratuliere, du hast dieses Rätsel erfolgreich abgeschlossen.";
-    const SUCCESS_PASSWORD_HINT = ""; // z.B.: "Passwort für Level 2: WALDFEE."
+
+    const SUCCESS_MESSAGE =
+      "Gratuliere, du hast dieses Rätsel erfolgreich abgeschlossen.";
+    const SUCCESS_PASSWORD_HINT =
+      ""; // z.B.: "Das Passwort für Level 2 lautet: WALDFEE."
 
     /************************************************************
      * 2. Hilfsfunktionen
      ************************************************************/
+
     function parseCellRef(ref) {
       if (!ref) return null;
       const m = String(ref).trim().toUpperCase().match(/^([A-Z]+)(\d+)$/);
@@ -314,36 +341,44 @@
     }
 
     function normalizeAnswer(str) {
-      return String(str || "").toUpperCase().replace(/\s+/g, "");
+      return String(str || "")
+        .toUpperCase()
+        .replace(/\s+/g, "");
     }
 
-    /************************************************************
-     * 3. Datenstruktur aus WORDS_INPUT aufbauen
-     *    Nummer kommt aus w.number (Generator). Frage ist w.clue (ohne Nummer).
-     ************************************************************/
-    const words = WORDS_INPUT.map((w, idx) => {
-      const coord = parseCellRef(w.start);
-      const normAnswer = normalizeAnswer(w.answer);
-      return {
-        index: idx,
-        rawAnswer: w.answer,
-        answer: normAnswer,
-        clueText: String(w.clue || ""),
-        clueNumber: (w.number != null && w.number !== "") ? String(w.number) : String(idx + 1),
-        startRow: coord ? coord.row : 1,
-        startCol: coord ? coord.col : 1,
-        direction: w.direction === "down" ? "down" : "across"
-      };
-    });
-
-    if (!words.length) {
-      document.getElementById("status").innerHTML =
-        '<span class="status-error">WORDS_INPUT ist leer. Bitte füge den Block aus dem Generator ein.</span>';
+    function extractNumberAndText(clue) {
+      const m = String(clue || "").trim().match(/^(\d+)\.\s*(.*)$/);
+      if (m) {
+        return { number: m[1], text: m[2] || "" };
+      }
+      return { number: null, text: String(clue || "") };
     }
 
-    /************************************************************
-     * 3b. Rastergröße berechnen
-     ************************************************************/
+     /************************************************************
+ * 3. Datenstruktur aus WORDS_INPUT aufbauen
+ ************************************************************/
+
+const words = WORDS_INPUT.map((w, idx) => {
+  const coord = parseCellRef(w.start);
+  const normAnswer = normalizeAnswer(w.answer);
+  return {
+    index: idx,
+    rawAnswer: w.answer,
+    answer: normAnswer,
+    clueRaw: w.clue,
+    clueNumber: w.number ? String(w.number) : String(idx + 1),
+    clueText: w.clue,
+    startRow: coord ? coord.row : 1,
+    startCol: coord ? coord.col : 1,
+    direction: w.direction === "down" ? "down" : "across"
+  };
+});
+
+if (!words.length) {
+  document.getElementById("status").innerHTML =
+    '<span class="status-error">WORDS_INPUT ist leer. Bitte füge den Block aus dem Generator ein.</span>';
+}
+
     let maxRow = 1;
     let maxCol = 1;
 
@@ -362,23 +397,26 @@
 
     const ROWS = maxRow;
     const COLS = maxCol;
+const EXTRA_BOTTOM = 28;
 
-    /************************************************************
-     * 3c. Höhe dynamisch: ROWS*32 + extra Abstand unten
-     ************************************************************/
-    const CELL_SIZE = 32;
-    const EXTRA_BOTTOM = 28; // <- mehr/ weniger Abstand unten
+function resizeGridWrapper() {
+  const gridWrapperEl = document.getElementById("gridWrapper");
+  const gridEl = document.getElementById("grid");
+  if (!gridWrapperEl || !gridEl) return;
 
-    const gridWrapperEl = document.getElementById("gridWrapper");
-    const gridEl = document.getElementById("grid");
+  const w = gridWrapperEl.clientWidth;
+  if (!w) return;
 
-    if (gridWrapperEl) gridWrapperEl.style.height = (ROWS * CELL_SIZE + EXTRA_BOTTOM) + "px";
-    if (gridEl) gridEl.style.height = (ROWS * CELL_SIZE) + "px";
+  const cell = w / COLS;          // Handy-Breite bestimmt Zellgröße
+  gridEl.style.height = (ROWS * cell) + "px";
+  gridEl.style.bottom = "auto";
 
-    /************************************************************
-     * 4. Cell-Map aufbauen
-     ************************************************************/
-    const cellMap = new Map();
+  gridWrapperEl.style.height = (ROWS * cell + EXTRA_BOTTOM) + "px";
+}
+
+resizeGridWrapper();
+window.addEventListener("resize", resizeGridWrapper);    
+const cellMap = new Map();
 
     function getCell(r, c) {
       const key = r + "-" + c;
@@ -402,7 +440,6 @@
 
     words.forEach((w) => {
       const len = w.answer.length;
-
       for (let i = 0; i < len; i++) {
         const r = w.direction === "across" ? w.startRow : w.startRow + i;
         const c = w.direction === "across" ? w.startCol + i : w.startCol;
@@ -423,23 +460,24 @@
         }
       }
 
-      // Nummer in Startzelle: falls zwei Wörter in gleicher Startzelle,
-      // nehmen wir die kleinere Zahl (damit 2 nicht zu 5 wird usw.)
-      const startCell = getCell(w.startRow, w.startCol);
-      const newNum = String(w.clueNumber);
+const startCell = getCell(w.startRow, w.startCol);
+const newNum = w.clueNumber ? String(w.clueNumber) : String(w.index + 1);
 
-      if (!startCell.number) {
-        startCell.number = newNum;
-      } else {
-        const a = parseInt(startCell.number, 10);
-        const b = parseInt(newNum, 10);
-        if (!isNaN(a) && !isNaN(b) && b < a) startCell.number = String(b);
-      }
-    });
+if (!startCell.number) {
+  startCell.number = newNum;
+} else {
+  const a = parseInt(startCell.number, 10);
+  const b = parseInt(newNum, 10);
+  if (!isNaN(a) && !isNaN(b) && b < a) {
+    startCell.number = String(b);
+  }
+   });
 
     /************************************************************
-     * 5. Grid in DOM zeichnen
+     * 4. Grid in DOM zeichnen
      ************************************************************/
+
+    const gridEl = document.getElementById("grid");
     gridEl.style.setProperty("--rows", ROWS);
     gridEl.style.setProperty("--cols", COLS);
 
@@ -465,7 +503,9 @@
 
           const numEl = document.createElement("div");
           numEl.className = "cell-number";
-          if (cellData.number) numEl.textContent = cellData.number;
+          if (cellData.number) {
+            numEl.textContent = cellData.number;
+          }
 
           if (cellData.acrossWord != null) {
             cellEl.dataset.acrossWord = cellData.acrossWord;
@@ -488,8 +528,9 @@
     }
 
     /************************************************************
-     * 6. Steuerung: Richtung, Auswahl, Eingabe
+     * 5. Steuerung: Richtung, Auswahl, Eingabe
      ************************************************************/
+
     let currentDirection = "across";
     let currentWordIndex = words.length ? 0 : null;
     let currentPosInWord = 0;
@@ -498,9 +539,15 @@
       currentDirection = dir === "down" ? "down" : "across";
       const buttons = document.querySelectorAll("#directionControls .btn.toggle");
       buttons.forEach((b) => {
-        b.classList.toggle("active", b.dataset.direction === currentDirection);
+        if (b.dataset.direction === currentDirection) {
+          b.classList.add("active");
+        } else {
+          b.classList.remove("active");
+        }
       });
-      if (currentWordIndex != null) highlightCurrentWord();
+      if (currentWordIndex != null) {
+        highlightCurrentWord();
+      }
     }
 
     function getCellsForWord(wordIndex) {
@@ -538,7 +585,6 @@
       if (!cellEl.classList.contains("active")) return;
       cellEl.addEventListener("click", () => {
         let wordIndex = null;
-
         if (currentDirection === "across" && cellEl.dataset.acrossWord != null) {
           wordIndex = Number(cellEl.dataset.acrossWord);
           currentDirection = "across";
@@ -555,10 +601,10 @@
 
         if (wordIndex != null) {
           currentWordIndex = wordIndex;
-          const pos = currentDirection === "across"
-            ? Number(cellEl.dataset.acrossPos)
-            : Number(cellEl.dataset.downPos);
-
+          const pos =
+            currentDirection === "across"
+              ? Number(cellEl.dataset.acrossPos)
+              : Number(cellEl.dataset.downPos);
           currentPosInWord = isNaN(pos) ? 0 : pos;
           setDirection(currentDirection);
           highlightCurrentWord();
@@ -574,8 +620,11 @@
         const key = ev.key;
 
         if (key === "Backspace") {
-          if (input.value) input.value = "";
-          else moveInWord(-1);
+          if (input.value) {
+            input.value = "";
+          } else {
+            moveInWord(-1);
+          }
           ev.preventDefault();
           return;
         }
@@ -604,11 +653,13 @@
       });
     });
 
-    document.getElementById("directionControls").addEventListener("click", (ev) => {
-      const btn = ev.target.closest(".btn.toggle");
-      if (!btn) return;
-      setDirection(btn.dataset.direction);
-    });
+    document
+      .getElementById("directionControls")
+      .addEventListener("click", (ev) => {
+        const btn = ev.target.closest(".btn.toggle");
+        if (!btn) return;
+        setDirection(btn.dataset.direction);
+      });
 
     if (words.length) {
       setDirection("across");
@@ -616,8 +667,9 @@
     }
 
     /************************************************************
-     * 7. Lösung prüfen und löschen
+     * 6. Lösung prüfen und löschen
      ************************************************************/
+
     function checkSolution() {
       let allCorrect = true;
       let allFilled = true;
@@ -629,13 +681,11 @@
 
         const val = normalizeAnswer(input.value).charAt(0) || "";
         const target = cell.letter;
-
         if (!val) {
           allFilled = false;
           cell.element.classList.remove("error", "correct");
           return;
         }
-
         if (val === target) {
           cell.element.classList.remove("error");
           cell.element.classList.add("correct");
@@ -649,12 +699,16 @@
       const statusEl = document.getElementById("status");
       if (allCorrect && allFilled) {
         let msg = SUCCESS_MESSAGE;
-        if (SUCCESS_PASSWORD_HINT.trim()) msg += " " + SUCCESS_PASSWORD_HINT.trim();
+        if (SUCCESS_PASSWORD_HINT.trim()) {
+          msg += " " + SUCCESS_PASSWORD_HINT.trim();
+        }
         statusEl.innerHTML = '<span class="status-ok">' + msg + "</span>";
       } else if (!allFilled) {
-        statusEl.innerHTML = '<span class="status-error">Es sind noch nicht alle Felder ausgefüllt.</span>';
+        statusEl.innerHTML =
+          '<span class="status-error">Es sind noch nicht alle Felder ausgefüllt.</span>';
       } else {
-        statusEl.innerHTML = '<span class="status-error">Es sind noch Fehler im Rätsel. Bitte kontrolliere deine Antworten.</span>';
+        statusEl.innerHTML =
+          '<span class="status-error">Es sind noch Fehler im Rätsel. Bitte kontrolliere deine Antworten.</span>';
       }
     }
 
@@ -675,12 +729,14 @@
     document.getElementById("clearBtn").addEventListener("click", clearSolution);
 
     /************************************************************
-     * 8. Legende (Fragen) anzeigen – ohne Doppelnummern
+     * 7. Legende (Fragen) anzeigen
      ************************************************************/
+
     function buildLegend() {
       const legendEl = document.getElementById("legend");
       if (!words.length) {
-        legendEl.textContent = "Keine Wörter definiert. Bitte WORDS_INPUT einfügen.";
+        legendEl.textContent =
+          "Keine Wörter definiert. Bitte WORDS_INPUT einfügen.";
         return;
       }
 
@@ -688,21 +744,22 @@
       const down = [];
 
       words.forEach((w) => {
-        const entry = { number: w.clueNumber, text: w.clueText };
+        const entry = {
+          number: w.clueNumber || String(w.index + 1),
+          text: w.clueText || w.clueRaw,
+          answer: w.rawAnswer
+        };
         if (w.direction === "across") across.push(entry);
         else down.push(entry);
       });
 
-      const sortByNumber = (a, b) => (parseInt(a.number, 10) || 0) - (parseInt(b.number, 10) || 0);
-      across.sort(sortByNumber);
-      down.sort(sortByNumber);
-
+      // WICHTIG: Nummerierung nur einmal – <ol> nummeriert automatisch
       const makeListHtml = (items) => {
         if (!items.length) return "<p>(keine)</p>";
         return (
-          "<ul>" +
-          items.map((it) => `<li><strong>${it.number}.</strong> ${it.text}</li>`).join("") +
-          "</ul>"
+          "<ol>" +
+          items.map((it) => `<li>${it.text}</li>`).join("") +
+          "</ol>"
         );
       };
 
@@ -717,5 +774,6 @@
   </script>
 </body>
 </html>
+
 
 
