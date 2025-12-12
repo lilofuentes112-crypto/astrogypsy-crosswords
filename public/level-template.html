@@ -2,211 +2,190 @@
 <html lang="de">
 <head>
   <meta charset="UTF-8" />
-  <title>Astro-Kreuzworträtsel </title>
+  <title>Astro-Kreuzworträtsel</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <style>
-    :root {
-      --astro-border: #f5b26b;
-      --astro-text: #f5e1c3;
-      --astro-bg: #000000;
-      --astro-cell-bg: rgba(0, 0, 0, 0.65);
-      --astro-cell-error: rgba(255, 64, 64, 0.4);
+    :root{
+      --astro-border:#f5b26b;
+      --astro-text:#f5e1c3;
+      --astro-bg:#000000;
+      --astro-cell-bg:rgba(0,0,0,.65);
+      --astro-cell-error:rgba(255,64,64,.4);
+      --cell:32px; /* wird per JS überschrieben (Handy-tauglich) */
+    }
+    *{box-sizing:border-box;}
+
+    body{
+      margin:0;
+      min-height:100vh;
+      font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+      background:var(--astro-bg);
+      color:var(--astro-text);
+      display:flex;
+      justify-content:center;
+      align-items:flex-start;
     }
 
-    * {
-      box-sizing: border-box;
+    .page{
+      max-width:900px;
+      width:100%;
+      padding:24px 16px 40px;
     }
 
-    body {
-      margin: 0;
-      min-height: 100vh;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-      background: var(--astro-bg);
-      color: var(--astro-text);
-      display: flex;
-      justify-content: center;
-      align-items: flex-start;
+    h1{
+      text-align:center;
+      margin:0 0 16px;
+      font-size:22px;
+      color:var(--astro-border);
     }
 
-    .page {
-      max-width: 900px;
-      width: 100%;
-      padding: 24px 16px 40px;
+    .board-frame{
+      border:2px solid var(--astro-border);
+      padding:16px;
+      margin:0 auto 16px;
+      max-width:620px;
+      background:#050505;
     }
 
-    h1 {
-      text-align: center;
-      margin: 0 0 16px;
-      font-size: 22px;
-      color: var(--astro-border);
+    .controls{
+      display:flex;
+      justify-content:center;
+      gap:8px;
+      margin-bottom:12px;
     }
 
-    .board-frame {
-      border: 2px solid var(--astro-border);
-      padding: 16px;
-      margin: 0 auto 16px;
-      max-width: 620px;
-      background: #050505;
+    .btn{
+      border:1px solid var(--astro-border);
+      background:transparent;
+      color:var(--astro-text);
+      padding:6px 14px;
+      border-radius:4px;
+      font-size:13px;
+      cursor:pointer;
+      min-width:92px;
     }
 
-    .controls {
-      display: flex;
-      justify-content: center;
-      gap: 8px;
-      margin-bottom: 12px;
+    .btn.primary{
+      background:var(--astro-border);
+      color:#000;
+      font-weight:600;
     }
 
-    .btn {
-      border: 1px solid var(--astro-border);
-      background: transparent;
-      color: var(--astro-text);
-      padding: 6px 14px;
-      border-radius: 4px;
-      font-size: 13px;
-      cursor: pointer;
-      min-width: 92px;
+    .btn.toggle.active{
+      background:var(--astro-border);
+      color:#000;
+      font-weight:600;
     }
 
-    .btn.primary {
-      background: var(--astro-border);
-      color: #000;
-      font-weight: 600;
+    .btn:hover{filter:brightness(1.05);}
+
+    .grid-wrapper{
+      position:relative;
+      width:100%;
+      max-width:580px;
+      margin:0 auto 24px;
+      border:1px solid var(--astro-border);
+      overflow:hidden;
+      background-size:cover;
+      background-position:center;
+      background-repeat:no-repeat;
     }
 
-    .btn.toggle.active {
-      background: var(--astro-border);
-      color: #000;
-      font-weight: 600;
+    .grid{
+      position:absolute;
+      inset:0;
+      display:grid;
+      grid-template-columns:repeat(var(--cols), 1fr);
+      grid-template-rows:repeat(var(--rows), 1fr);
     }
 
-    .btn:hover {
-      filter: brightness(1.05);
+    /* Leere Zellen: unsichtbar */
+    .cell{
+      width:var(--cell);
+      height:var(--cell);
+      background-color:transparent;
+      border:none;
+      position:relative;
+      box-sizing:border-box;
     }
 
-    .grid-wrapper {
-  position: relative;
-  width: 100%;
-  max-width: 580px;
-  margin: 0 auto 24px;
-  border: 1px solid var(--astro-border);
-  overflow: hidden;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-}
-    .grid {
-      position: absolute;
-      inset: 0;
-      display: grid;
-      grid-template-columns: repeat(var(--cols), 1fr);
-      grid-template-rows: repeat(var(--rows), 1fr);
-    }
-
-    /* Leere Zellen: komplett unsichtbar, keine Linien */
-    .cell {
-      width: 100%;
-      height: 100%;
-      background-color: transparent;
-      border: none;
-      position: relative;
-      box-sizing: border-box;
-    }
-
-    /* Nur belegte Zellen (mit Buchstaben) schwarz + Rahmen */
-    .cell.active {
-      border: 1px solid var(--astro-border);
-      background-color: #000000;
+    /* Nur belegte Zellen sichtbar */
+    .cell.active{
+      border:1px solid var(--astro-border);
+      background-color:#000000;
     }
 
     .cell input{
-  width:100%;
-  height:100%;
-  border:none;
-  background:transparent;
-  color:#f5e3c3;
-  font-weight:600;
-  text-align:center;
-  padding:0;
-  box-sizing:border-box;
-  font-size:clamp(14px, 3.2vw, 18px);
-  line-height:1;
-}
-    .cell input:focus {
-      outline: none;
-      background: transparent;
+      width:100%;
+      height:100%;
+      border:none;
+      background:transparent;
+      color:#f5e3c3;
+      font-weight:600;
+      text-align:center;
+      padding:0;
+      box-sizing:border-box;
+      font-size:calc(var(--cell) * 0.56);
+      line-height:var(--cell);
     }
 
-    .cell-number {
-      position: absolute;
-      top: 2px;
-      left: 3px;
-      font-size: 9px;
-      color: var(--astro-border);
-      pointer-events: none;
-      text-shadow: 0 0 3px #000;
+    .cell input:focus{
+      outline:none;
+      background:transparent;
     }
 
-    .cell.error .cell-input {
-      background: var(--astro-cell-error);
+    .cell-number{
+      position:absolute;
+      top:2px;
+      left:3px;
+      font-size:9px;
+      color:var(--astro-border);
+      pointer-events:none;
+      text-shadow:0 0 3px #000;
     }
 
-    .cell.correct .cell-input {
-      background: var(--astro-cell-bg);
+    .cell.error .cell-input{background:var(--astro-cell-error);}
+    .cell.correct .cell-input{background:var(--astro-cell-bg);}
+
+    .status{
+      margin-top:8px;
+      text-align:center;
+      font-size:13px;
+      min-height:18px;
     }
 
-    .status {
-      margin-top: 8px;
-      text-align: center;
-      font-size: 13px;
-      min-height: 18px;
+    .status-ok{color:#7cff9d;}
+    .status-error{color:#ff8080;}
+
+    .legend{
+      border-top:1px solid var(--astro-border);
+      margin-top:12px;
+      padding-top:10px;
+      font-size:13px;
     }
 
-    .status-ok {
-      color: #7cff9d;
+    .legend h2{
+      font-size:15px;
+      margin:6px 0;
+      color:var(--astro-border);
     }
 
-    .status-error {
-      color: #ff8080;
+    .legend ol{
+      padding-left:20px;
+      margin:4px 0 8px;
     }
 
-    .legend {
-      border-top: 1px solid var(--astro-border);
-      margin-top: 12px;
-      padding-top: 10px;
-      font-size: 13px;
-    }
+    .legend li{margin-bottom:4px;}
 
-    .legend h2 {
-      font-size: 15px;
-      margin: 6px 0;
-      color: var(--astro-border);
-    }
-
-    .legend ol {
-      padding-left: 20px;
-      margin: 4px 0 8px;
-    }
-
-    .legend li {
-      margin-bottom: 4px;
-    }
-
-    @media (max-width: 600px) {
-      .page {
-        padding: 12px 8px 24px;
-      }
-
-      .board-frame {
-        padding: 12px;
-      }
-
-      h1 {
-        font-size: 18px;
-      }
+    @media (max-width:600px){
+      .page{padding:12px 8px 24px;}
+      .board-frame{padding:12px;}
+      h1{font-size:18px;}
     }
   </style>
 </head>
+
 <body>
   <div class="page">
     <h1>Zertifikats-Kreuzworträtsel – Level X</h1>
@@ -220,27 +199,25 @@
       <div
         id="gridWrapper"
         class="grid-wrapper"
-        style="background-image: url('https://static.wixstatic.com/media/6d3632_8671621dade74457977217105254aadf~mv2.png');"
+        style="background-image:url('https://static.wixstatic.com/media/6d3632_8671621dade74457977217105254aadf~mv2.png');"
       >
         <div id="grid" class="grid"></div>
       </div>
 
-      <div class="controls" style="margin-top: 12px;">
+      <div class="controls" style="margin-top:12px;">
         <button class="btn primary" id="checkBtn">Lösung prüfen</button>
         <button class="btn" id="clearBtn">Alles löschen</button>
       </div>
 
       <div id="status" class="status"></div>
-
       <div class="legend" id="legend"></div>
     </div>
   </div>
 
   <script>
     /************************************************************
-     * 1. WORDS_INPUT – hier fügst du den Block aus dem Generator ein
+     * 1. WORDS_INPUT – hier den Block aus dem Generator einfügen
      ************************************************************/
-
     const WORDS_INPUT = [
       /* Hier den vom Generator erzeugten Block einfügen */
     ];
@@ -248,16 +225,14 @@
     /************************************************************
      * 1a. Erfolgs-Text / Passwort-Hinweis
      ************************************************************/
-
     const SUCCESS_MESSAGE =
       "Gratuliere, du hast dieses Rätsel erfolgreich abgeschlossen.";
     const SUCCESS_PASSWORD_HINT =
-      ""; // z.B.: "Das Passwort für Level 2 lautet: WALDFEE."
+      "";
 
     /************************************************************
      * 2. Hilfsfunktionen
      ************************************************************/
-
     function parseCellRef(ref) {
       if (!ref) return null;
       const m = String(ref).trim().toUpperCase().match(/^([A-Z]+)(\d+)$/);
@@ -273,43 +248,38 @@
     }
 
     function normalizeAnswer(str) {
-      return String(str || "")
-        .toUpperCase()
-        .replace(/\s+/g, "");
+      return String(str || "").toUpperCase().replace(/\s+/g, "");
     }
 
     function extractNumberAndText(clue) {
       const m = String(clue || "").trim().match(/^(\d+)\.\s*(.*)$/);
-      if (m) {
-        return { number: m[1], text: m[2] || "" };
-      }
+      if (m) return { number: m[1], text: m[2] || "" };
       return { number: null, text: String(clue || "") };
     }
 
-     /************************************************************
- * 3. Datenstruktur aus WORDS_INPUT aufbauen
- ************************************************************/
+    /************************************************************
+     * 3. Datenstruktur aus WORDS_INPUT aufbauen
+     ************************************************************/
+    const words = WORDS_INPUT.map((w, idx) => {
+      const coord = parseCellRef(w.start);
+      const normAnswer = normalizeAnswer(w.answer);
+      return {
+        index: idx,
+        rawAnswer: w.answer,
+        answer: normAnswer,
+        clueRaw: w.clue,
+        clueNumber: w.number ? String(w.number) : String(idx + 1),
+        clueText: w.clue,
+        startRow: coord ? coord.row : 1,
+        startCol: coord ? coord.col : 1,
+        direction: w.direction === "down" ? "down" : "across"
+      };
+    });
 
-const words = WORDS_INPUT.map((w, idx) => {
-  const coord = parseCellRef(w.start);
-  const normAnswer = normalizeAnswer(w.answer);
-  return {
-    index: idx,
-    rawAnswer: w.answer,
-    answer: normAnswer,
-    clueRaw: w.clue,
-    clueNumber: w.number ? String(w.number) : String(idx + 1),
-    clueText: w.clue,
-    startRow: coord ? coord.row : 1,
-    startCol: coord ? coord.col : 1,
-    direction: w.direction === "down" ? "down" : "across"
-  };
-});
-
-if (!words.length) {
-  document.getElementById("status").innerHTML =
-    '<span class="status-error">WORDS_INPUT ist leer. Bitte füge den Block aus dem Generator ein.</span>';
-}
+    if (!words.length) {
+      document.getElementById("status").innerHTML =
+        '<span class="status-error">WORDS_INPUT ist leer. Bitte füge den Block aus dem Generator ein.</span>';
+    }
 
     let maxRow = 1;
     let maxCol = 1;
@@ -329,26 +299,33 @@ if (!words.length) {
 
     const ROWS = maxRow;
     const COLS = maxCol;
-const EXTRA_BOTTOM = 28;
 
-function resizeGridWrapper() {
-  const gridWrapperEl = document.getElementById("gridWrapper");
-  const gridEl = document.getElementById("grid");
-  if (!gridWrapperEl || !gridEl) return;
+    const EXTRA_BOTTOM = 28;
 
-  const w = gridWrapperEl.clientWidth;
-  if (!w) return;
+    function resizeGridWrapper() {
+      const gridWrapperEl = document.getElementById("gridWrapper");
+      const gridEl = document.getElementById("grid");
+      if (!gridWrapperEl || !gridEl) return;
 
-  const cell = w / COLS;          // Handy-Breite bestimmt Zellgröße
-  gridEl.style.height = (ROWS * cell) + "px";
-  gridEl.style.bottom = "auto";
+      const w = gridWrapperEl.clientWidth;
+      if (!w) return;
 
-  gridWrapperEl.style.height = (ROWS * cell + EXTRA_BOTTOM) + "px";
-}
+      const cell = w / COLS;
 
-resizeGridWrapper();
-window.addEventListener("resize", resizeGridWrapper);    
-const cellMap = new Map();
+      gridEl.style.setProperty("--rows", ROWS);
+      gridEl.style.setProperty("--cols", COLS);
+      gridEl.style.setProperty("--cell", cell + "px");
+
+      gridEl.style.height = (ROWS * cell) + "px";
+      gridEl.style.bottom = "auto";
+
+      gridWrapperEl.style.height = (ROWS * cell + EXTRA_BOTTOM) + "px";
+    }
+
+    resizeGridWrapper();
+    window.addEventListener("resize", resizeGridWrapper);
+
+    const cellMap = new Map();
 
     function getCell(r, c) {
       const key = r + "-" + c;
@@ -392,23 +369,23 @@ const cellMap = new Map();
         }
       }
 
-const startCell = getCell(w.startRow, w.startCol);
-const newNum = w.clueNumber ? String(w.clueNumber) : String(w.index + 1);
+      const startCell = getCell(w.startRow, w.startCol);
+      const newNum = w.clueNumber ? String(w.clueNumber) : String(w.index + 1);
 
-if (!startCell.number) {
-  startCell.number = newNum;
-} else {
-  const a = parseInt(startCell.number, 10);
-  const b = parseInt(newNum, 10);
-  if (!isNaN(a) && !isNaN(b) && b < a) {
-    startCell.number = String(b);
-  }
-   });
+      if (!startCell.number) {
+        startCell.number = newNum;
+      } else {
+        const a = parseInt(startCell.number, 10);
+        const b = parseInt(newNum, 10);
+        if (!isNaN(a) && !isNaN(b) && b < a) {
+          startCell.number = String(b);
+        }
+      }
+    });
 
     /************************************************************
      * 4. Grid in DOM zeichnen
      ************************************************************/
-
     const gridEl = document.getElementById("grid");
     gridEl.style.setProperty("--rows", ROWS);
     gridEl.style.setProperty("--cols", COLS);
@@ -435,9 +412,7 @@ if (!startCell.number) {
 
           const numEl = document.createElement("div");
           numEl.className = "cell-number";
-          if (cellData.number) {
-            numEl.textContent = cellData.number;
-          }
+          if (cellData.number) numEl.textContent = cellData.number;
 
           if (cellData.acrossWord != null) {
             cellEl.dataset.acrossWord = cellData.acrossWord;
@@ -459,10 +434,12 @@ if (!startCell.number) {
       }
     }
 
+    // Nach dem Zeichnen nochmal messen (Wix/Fonts können Breite ändern)
+    resizeGridWrapper();
+
     /************************************************************
      * 5. Steuerung: Richtung, Auswahl, Eingabe
      ************************************************************/
-
     let currentDirection = "across";
     let currentWordIndex = words.length ? 0 : null;
     let currentPosInWord = 0;
@@ -471,15 +448,10 @@ if (!startCell.number) {
       currentDirection = dir === "down" ? "down" : "across";
       const buttons = document.querySelectorAll("#directionControls .btn.toggle");
       buttons.forEach((b) => {
-        if (b.dataset.direction === currentDirection) {
-          b.classList.add("active");
-        } else {
-          b.classList.remove("active");
-        }
+        if (b.dataset.direction === currentDirection) b.classList.add("active");
+        else b.classList.remove("active");
       });
-      if (currentWordIndex != null) {
-        highlightCurrentWord();
-      }
+      if (currentWordIndex != null) highlightCurrentWord();
     }
 
     function getCellsForWord(wordIndex) {
@@ -495,10 +467,7 @@ if (!startCell.number) {
 
       const targetCell = cells[currentPosInWord] || cells[0];
       const input = targetCell && targetCell.querySelector(".cell-input");
-      if (input) {
-        input.focus();
-        input.select();
-      }
+      if (input) { input.focus(); input.select(); }
     }
 
     function moveInWord(step) {
@@ -517,6 +486,7 @@ if (!startCell.number) {
       if (!cellEl.classList.contains("active")) return;
       cellEl.addEventListener("click", () => {
         let wordIndex = null;
+
         if (currentDirection === "across" && cellEl.dataset.acrossWord != null) {
           wordIndex = Number(cellEl.dataset.acrossWord);
           currentDirection = "across";
@@ -552,11 +522,8 @@ if (!startCell.number) {
         const key = ev.key;
 
         if (key === "Backspace") {
-          if (input.value) {
-            input.value = "";
-          } else {
-            moveInWord(-1);
-          }
+          if (input.value) input.value = "";
+          else moveInWord(-1);
           ev.preventDefault();
           return;
         }
@@ -585,13 +552,11 @@ if (!startCell.number) {
       });
     });
 
-    document
-      .getElementById("directionControls")
-      .addEventListener("click", (ev) => {
-        const btn = ev.target.closest(".btn.toggle");
-        if (!btn) return;
-        setDirection(btn.dataset.direction);
-      });
+    document.getElementById("directionControls").addEventListener("click", (ev) => {
+      const btn = ev.target.closest(".btn.toggle");
+      if (!btn) return;
+      setDirection(btn.dataset.direction);
+    });
 
     if (words.length) {
       setDirection("across");
@@ -601,7 +566,6 @@ if (!startCell.number) {
     /************************************************************
      * 6. Lösung prüfen und löschen
      ************************************************************/
-
     function checkSolution() {
       let allCorrect = true;
       let allFilled = true;
@@ -613,6 +577,7 @@ if (!startCell.number) {
 
         const val = normalizeAnswer(input.value).charAt(0) || "";
         const target = cell.letter;
+
         if (!val) {
           allFilled = false;
           cell.element.classList.remove("error", "correct");
@@ -631,9 +596,7 @@ if (!startCell.number) {
       const statusEl = document.getElementById("status");
       if (allCorrect && allFilled) {
         let msg = SUCCESS_MESSAGE;
-        if (SUCCESS_PASSWORD_HINT.trim()) {
-          msg += " " + SUCCESS_PASSWORD_HINT.trim();
-        }
+        if (SUCCESS_PASSWORD_HINT.trim()) msg += " " + SUCCESS_PASSWORD_HINT.trim();
         statusEl.innerHTML = '<span class="status-ok">' + msg + "</span>";
       } else if (!allFilled) {
         statusEl.innerHTML =
@@ -663,12 +626,10 @@ if (!startCell.number) {
     /************************************************************
      * 7. Legende (Fragen) anzeigen
      ************************************************************/
-
     function buildLegend() {
       const legendEl = document.getElementById("legend");
       if (!words.length) {
-        legendEl.textContent =
-          "Keine Wörter definiert. Bitte WORDS_INPUT einfügen.";
+        legendEl.textContent = "Keine Wörter definiert. Bitte WORDS_INPUT einfügen.";
         return;
       }
 
@@ -685,14 +646,9 @@ if (!startCell.number) {
         else down.push(entry);
       });
 
-      // WICHTIG: Nummerierung nur einmal – <ol> nummeriert automatisch
       const makeListHtml = (items) => {
         if (!items.length) return "<p>(keine)</p>";
-        return (
-          "<ol>" +
-          items.map((it) => `<li>${it.text}</li>`).join("") +
-          "</ol>"
-        );
+        return "<ol>" + items.map((it) => `<li>${it.text}</li>`).join("") + "</ol>";
       };
 
       legendEl.innerHTML =
