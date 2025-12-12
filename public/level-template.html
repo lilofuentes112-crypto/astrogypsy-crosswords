@@ -627,36 +627,46 @@
      * 7. Legende (Fragen) anzeigen
      ************************************************************/
     function buildLegend() {
-      const legendEl = document.getElementById("legend");
-      if (!words.length) {
-        legendEl.textContent = "Keine Wörter definiert. Bitte WORDS_INPUT einfügen.";
-        return;
-      }
+  const legendEl = document.getElementById("legend");
+  if (!words.length) {
+    legendEl.textContent = "Keine Wörter definiert. Bitte WORDS_INPUT einfügen.";
+    return;
+  }
 
-      const across = [];
-      const down = [];
+  const across = [];
+  const down = [];
 
-      words.forEach((w) => {
-        const entry = {
-          number: w.clueNumber || String(w.index + 1),
-          text: w.clueText || w.clueRaw,
-          answer: w.rawAnswer
-        };
-        if (w.direction === "across") across.push(entry);
-        else down.push(entry);
-      });
+  words.forEach((w) => {
+    const num = w.clueNumber ? parseInt(w.clueNumber, 10) : (w.index + 1);
+    const entry = {
+      number: isNaN(num) ? (w.index + 1) : num,
+      text: w.clueText || w.clueRaw,
+    };
+    if (w.direction === "across") across.push(entry);
+    else down.push(entry);
+  });
 
-      const makeListHtml = (items) => {
-        if (!items.length) return "<p>(keine)</p>";
-        return "<ol>" + items.map((it) => `<li>${it.text}</li>`).join("") + "</ol>";
-      };
+  // nach Excel-Nummer sortieren
+  across.sort((a, b) => a.number - b.number);
+  down.sort((a, b) => a.number - b.number);
 
-      legendEl.innerHTML =
-        "<h2>Waagrecht</h2>" +
-        makeListHtml(across) +
-        "<h2>Senkrecht</h2>" +
-        makeListHtml(down);
-    }
+  // Wichtig: Nummern explizit setzen (statt automatisch 1..n)
+  const makeListHtml = (items) => {
+    if (!items.length) return "<p>(keine)</p>";
+    return (
+      "<ol>" +
+      items.map((it) => `<li value="${it.number}">${it.text}</li>`).join("") +
+      "</ol>"
+    );
+  };
+
+  legendEl.innerHTML =
+    "<h2>Waagrecht</h2>" +
+    makeListHtml(across) +
+    "<h2>Senkrecht</h2>" +
+    makeListHtml(down);
+}
+
 
     buildLegend();
   </script>
