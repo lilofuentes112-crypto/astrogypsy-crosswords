@@ -330,6 +330,24 @@ if (!words.length) {
 
     const ROWS = maxRow;
     const COLS = maxCol;
+// Rasterhöhe fix (ROWS * 32px) + extra Abstand unten, ohne dass die Zellen höher werden
+const CELL_SIZE = 32;
+const EXTRA_BOTTOM = 24;
+
+const gridWrapperEl = document.getElementById("gridWrapper");
+const gridEl = document.getElementById("grid");
+
+if (gridWrapperEl) {
+  gridWrapperEl.style.height = (ROWS * CELL_SIZE + EXTRA_BOTTOM) + "px";
+}
+
+if (gridEl) {
+  gridEl.style.height = (ROWS * CELL_SIZE) + "px";
+  gridEl.style.top = "0";
+  gridEl.style.left = "0";
+  gridEl.style.right = "0";
+  gridEl.style.bottom = "auto";
+}
 // Höhe des Bild-/Rasterbereichs dynamisch anpassen
 const CELL_SIZE = 32;
 const EXTRA_BOTTOM = 32;
@@ -382,11 +400,18 @@ if (gridWrapperEl) {
         }
       }
 
-      const startCell = getCell(w.startRow, w.startCol);
-      if (!startCell.number) {
-        startCell.number = w.clueNumber || String(w.index + 1);
-      }
-    });
+const startCell = getCell(w.startRow, w.startCol);
+const newNum = w.clueNumber ? String(w.clueNumber) : String(w.index + 1);
+
+if (!startCell.number) {
+  startCell.number = newNum;
+} else {
+  const a = parseInt(startCell.number, 10);
+  const b = parseInt(newNum, 10);
+  if (!isNaN(a) && !isNaN(b) && b < a) {
+    startCell.number = String(b);
+  }
+   });
 
     /************************************************************
      * 4. Grid in DOM zeichnen
