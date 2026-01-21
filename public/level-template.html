@@ -139,7 +139,7 @@
       position:absolute;
       top:2px;
       left:3px;
-      font-size:9px;
+      font-size: clamp(11px, 2.8vw, 14px);
       color:var(--astro-border);
       pointer-events:none;
       text-shadow:0 0 3px #000;
@@ -193,7 +193,7 @@
     <div class="board-frame">
       <div class="controls" id="directionControls">
         <button class="btn toggle active" data-direction="across">Waagrecht</button>
-        <button class="btn toggle" data-direction="down">Senkrecht</button>
+        <button class="btn toggle" data-direction="down">Senkkrecht</button>
       </div>
 
       <div
@@ -514,11 +514,48 @@
       });
     });
 
+    function syncWordFromCell(cellEl) {
+      if (!cellEl) return;
+
+      if (currentDirection === "down" && cellEl.dataset.downWord != null) {
+        currentWordIndex = Number(cellEl.dataset.downWord);
+        const pos = Number(cellEl.dataset.downPos);
+        currentPosInWord = isNaN(pos) ? 0 : pos;
+        return;
+      }
+
+      if (currentDirection === "across" && cellEl.dataset.acrossWord != null) {
+        currentWordIndex = Number(cellEl.dataset.acrossWord);
+        const pos = Number(cellEl.dataset.acrossPos);
+        currentPosInWord = isNaN(pos) ? 0 : pos;
+        return;
+      }
+
+      if (cellEl.dataset.acrossWord != null) {
+        currentWordIndex = Number(cellEl.dataset.acrossWord);
+        const pos = Number(cellEl.dataset.acrossPos);
+        currentPosInWord = isNaN(pos) ? 0 : pos;
+        currentDirection = "across";
+        setDirection("across");
+        return;
+      }
+      if (cellEl.dataset.downWord != null) {
+        currentWordIndex = Number(cellEl.dataset.downWord);
+        const pos = Number(cellEl.dataset.downPos);
+        currentPosInWord = isNaN(pos) ? 0 : pos;
+        currentDirection = "down";
+        setDirection("down");
+        return;
+      }
+    }
+
     allCells.forEach((cellEl) => {
       const input = cellEl.querySelector(".cell-input");
       if (!input) return;
 
       input.addEventListener("keydown", (ev) => {
+        syncWordFromCell(cellEl);
+
         const key = ev.key;
 
         if (key === "Backspace") {
@@ -627,46 +664,45 @@
      * 7. Legende (Fragen) anzeigen
      ************************************************************/
     function buildLegend() {
-  const legendEl = document.getElementById("legend");
-  if (!words.length) {
-    legendEl.textContent = "Keine Wörter definiert. Bitte WORDS_INPUT einfügen.";
-    return;
-  }
+      const legendEl = document.getElementById("legend");
+      if (!words.length) {
+        legendEl.textContent = "Keine Wörter definiert. Bitte WORDS_INPUT einfügen.";
+        return;
+      }
 
-  const across = [];
-  const down = [];
+      const across = [];
+      const down = [];
 
-  words.forEach((w) => {
-    const num = w.clueNumber ? parseInt(w.clueNumber, 10) : (w.index + 1);
-    const entry = {
-      number: isNaN(num) ? (w.index + 1) : num,
-      text: w.clueText || w.clueRaw,
-    };
-    if (w.direction === "across") across.push(entry);
-    else down.push(entry);
-  });
+      words.forEach((w) => {
+        const num = w.clueNumber ? parseInt(w.clueNumber, 10) : (w.index + 1);
+        const entry = {
+          number: isNaN(num) ? (w.index + 1) : num,
+          text: w.clueText || w.clueRaw,
+        };
+        if (w.direction === "across") across.push(entry);
+        else down.push(entry);
+      });
 
-  // nach Excel-Nummer sortieren
-  across.sort((a, b) => a.number - b.number);
-  down.sort((a, b) => a.number - b.number);
+      // nach Excel-Nummer sortieren
+      across.sort((a, b) => a.number - b.number);
+      down.sort((a, b) => a.number - b.number);
 
-  // Wichtig: Nummern explizit setzen (statt automatisch 1..n)
-  const makeListHtml = (items) => {
-    if (!items.length) return "<p>(keine)</p>";
-    return (
-      "<ol>" +
-      items.map((it) => `<li value="${it.number}">${it.text}</li>`).join("") +
-      "</ol>"
-    );
-  };
+      // Wichtig: Nummern explizit setzen (statt automatisch 1..n)
+      const makeListHtml = (items) => {
+        if (!items.length) return "<p>(keine)</p>";
+        return (
+          "<ol>" +
+          items.map((it) => `<li value="${it.number}">${it.text}</li>`).join("") +
+          "</ol>"
+        );
+      };
 
-  legendEl.innerHTML =
-    "<h2>Waagrecht</h2>" +
-    makeListHtml(across) +
-    "<h2>Senkrecht</h2>" +
-    makeListHtml(down);
-}
-
+      legendEl.innerHTML =
+        "<h2>Waagrecht</h2>" +
+        makeListHtml(across) +
+        "<h2>Senkrecht</h2>" +
+        makeListHtml(down);
+    }
 
     buildLegend();
   </script>
